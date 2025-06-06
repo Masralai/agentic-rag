@@ -11,7 +11,7 @@ const langbase = new Langbase({
 
 async function main() {
   const cwd = process.cwd();
-  const memoryName = "knowledge-base";
+  const memoryName = "the-knowledge-base";
 
   // to upload agent arch doc
   const agentArch = await readFile(path.join(cwd, "docs", "agent-arch.txt"));

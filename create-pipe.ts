@@ -8,7 +8,7 @@ const langbase = new Langbase({
 
 async function main() {
     const supportAgent = await langbase.pipes.create({
-        name: `support-agent`,
+        name: `support-agent-g`,
         description: `An AI agent to support users with their queries.`,
         messages: [
             {
