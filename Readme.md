@@ -43,46 +43,75 @@ LANGBASE_API_KEY=your_api_key_here
 
 ## Project Structure
 
-- `index.ts` - Main entry point for the application
-- `agents.ts` - AI agent implementations and configurations
-- `create-memory.ts` - Memory creation and management
-- `create-pipe.ts` - Pipeline creation for AI processing
-- `query.ts` - Query handling and processing
-- `upload-docs.ts` - Document upload functionality
+```
+agentic-rag/
+├── src/
+│   ├── agents.ts        # AI agent implementations and configurations
+│   ├── create-memory.ts # Memory creation and management
+│   ├── create-pipe.ts   # Pipeline creation for AI processing
+│   ├── index.ts         # Main entry point (returns responses with chunks)
+│   ├── query.ts         # Query handling (returns only responses)
+│   └── upload-docs.ts   # Document upload functionality
+├── docs/                # Directory for training documents
+│   ├── langbase-faq.txt
+│   └── agent-arch.txt
+├── .gitignore
+├── package.json
+└── README.md
+```
 
 ## Usage
 
-The project uses `tsx` to run TypeScript files directly. Here's how to use the different components:
+The project uses `tsx` to run TypeScript files directly. Here's the typical workflow:
 
-1. Upload documents:
+1. Add your training documents to the `docs/` folder (text files)
 
-```bash
-npx tsx upload-docs.ts
-```
-
-2. Create memory:
+2. Upload the documents to create the knowledge base:
 
 ```bash
-npx tsx create-memory.ts
+npx tsx src/upload-docs.ts
 ```
 
-3. Create pipe:
+3. Create memory for the uploaded documents:
 
 ```bash
-npx tsx create-pipe.ts
+npx tsx src/create-memory.ts
 ```
 
-4. Run queries:
+4. Create the processing pipeline:
 
 ```bash
-npx tsx query.ts
+npx tsx src/create-pipe.ts
 ```
 
-5. Run the main application:
+5. To get responses with detailed chunks (useful for debugging):
 
 ```bash
-npx tsx index.ts
+npx tsx src/index.ts
 ```
+
+6. To get only the responses to queries:
+   - Edit the query in `src/query.ts`
+   - Run:
+
+```bash
+npx tsx src/query.ts
+```
+
+## Workflow Explanation
+
+1. **Document Preparation**:
+   - Place your training documents in the `docs/` folder
+   - Documents should be in text format (.txt)
+
+2. **Setup Process**:
+   - Upload documents using `upload-docs.ts`
+   - Create memory using `create-memory.ts`
+   - Set up the processing pipeline using `create-pipe.ts`
+
+3. **Querying**:
+   - For development/debugging: Use `index.ts` to see both responses and chunks
+   - For production: Use `query.ts` by updating the query in the file
 
 ## Dependencies
 
