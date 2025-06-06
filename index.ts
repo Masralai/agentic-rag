@@ -1,10 +1,18 @@
 //agent creation, memory setup, and document upload.
 
-import { runMemoryAgent } from "./agents";
+import { runMemoryAgent, runAISupportAgent } from "./agents";
 
 async function main() {
-  const chunks = await runMemoryAgent("What is agent parallelization?");
-  console.log("Memory chunk:", chunks);
+  const query = 'What is agent parallelization?'
+  const chunks = await runMemoryAgent(query);
+
+  const completion = await runAISupportAgent({
+    chunks,
+    query,
+  })
+
+  console.log('completion: ', completion)
+
 }
 
 main();

@@ -9,7 +9,7 @@ const langbase = new Langbase({
 });
 async function queryAgentArchitecture() {
  
-  const knowledgePipeName = `support-agent-g`; 
+  const knowledgePipeName = `support-agent-gem`; 
 
   console.log(`\nQuerying Agent about Architectures...`);
 

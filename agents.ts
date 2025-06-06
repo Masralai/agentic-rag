@@ -17,7 +17,7 @@ export async function runAISupportAgent({
   const systemPrompt = await getSystemPrompt(chunks);
   const { completion } = await langbase.pipes.run({
     stream: false,
-    name: "support-agent-g",
+    name: "support-agent-gem",
     messages: [
       {
         role: "system",
