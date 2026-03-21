@@ -1,0 +1,30 @@
+{
+  "node": {
+    "0c33e2a93de6d20cfcb98363ab91e61e6f58a948": {
+      "workers": {
+        "app/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22D%3A%5C%5CStudies%5C%5CCoding%5C%5CProjects%5C%5Cagentic-rag%5C%5Capp%5C%5Cactions.ts%22%2C%5B%22askAgent%22%2C%22listDocuments%22%2C%22uploadFile%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    },
+    "19812174d84239bc6bb82dd5a4fd09c5b7c3dda6": {
+      "workers": {
+        "app/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22D%3A%5C%5CStudies%5C%5CCoding%5C%5CProjects%5C%5Cagentic-rag%5C%5Capp%5C%5Cactions.ts%22%2C%5B%22askAgent%22%2C%22listDocuments%22%2C%22uploadFile%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    },
+    "23845af0888bb688543af66b8732b5e1de1ab64a": {
+      "workers": {
+        "app/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22D%3A%5C%5CStudies%5C%5CCoding%5C%5CProjects%5C%5Cagentic-rag%5C%5Capp%5C%5Cactions.ts%22%2C%5B%22askAgent%22%2C%22listDocuments%22%2C%22uploadFile%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/page": "action-browser"
+      }
+    }
+  },
+  "edge": {},
+  "encryptionKey": "ZOZamYTAYU1vak1AhlkN3+FTzgf0Vw5FSvYJUZ8bXj8="
+}
