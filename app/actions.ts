@@ -1,20 +1,20 @@
-'use server';
+"use server";
 
-import { runMemoryAgent, runAISupportAgent } from "@/src/agents";
-import { Langbase } from "langbase";
-import { CONFIG } from "@/src/config";
 import { revalidatePath } from "next/cache";
+import { langbase } from "@/lib/langbase";
+import { CONFIG } from "@/lib/config";
+import { runMemoryAgent, runAISupportAgent } from "@/lib/agents";
+import type { QueryResult, UploadResult } from "@/lib/types";
 
-const langbase = new Langbase({
-  apiKey: process.env.LANGBASE_API_KEY!,
-});
-
-export async function askAgent(query: string) {
+export async function askAgent(query: string): Promise<QueryResult> {
   try {
     const chunks = await runMemoryAgent(query);
-    
+
     if (!chunks || chunks.length === 0) {
-      return { completion: "No relevant information found in memory. Please upload some documents first.", sources: [] };
+      return {
+        completion: "No relevant information found in memory. Please upload some documents first.",
+        sources: [],
+      };
     }
 
     const completion = await runAISupportAgent({
@@ -22,7 +22,7 @@ export async function askAgent(query: string) {
       query,
     });
 
-    const sources = chunks.map(c => c.documentName);
+    const sources = (chunks as any[]).map((c) => c.documentName || c.source || "Unknown");
 
     return { completion, sources };
   } catch (error) {
@@ -31,9 +31,9 @@ export async function askAgent(query: string) {
   }
 }
 
-export async function uploadFile(formData: FormData) {
+export async function uploadFile(formData: FormData): Promise<UploadResult> {
   try {
-    const file = formData.get('file') as File;
+    const file = formData.get("file") as File;
     if (!file) throw new Error("No file provided");
 
     const bytes = await file.arrayBuffer();
@@ -43,7 +43,7 @@ export async function uploadFile(formData: FormData) {
 
     const result = await langbase.memories.documents.upload({
       memoryName: CONFIG.MEMORY_NAME,
-      contentType: file.type || 'text/plain',
+      contentType: (file.type as any) || "text/plain",
       documentName: file.name,
       document: buffer,
     });
@@ -52,7 +52,7 @@ export async function uploadFile(formData: FormData) {
       throw new Error("Langbase upload failed");
     }
 
-    revalidatePath('/');
+    revalidatePath("/");
     return { success: true, fileName: file.name };
   } catch (error) {
     console.error("Upload Error:", error);

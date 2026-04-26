@@ -1,24 +1,17 @@
 {
   "name": "agentic-rag",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup:memory": "tsx src/create-memory.ts",
-    "setup:pipe": "tsx src/create-pipe.ts",
-    "upload": "tsx src/upload-docs.ts",
-    "query": "tsx src/query.ts",
-    "cli": "tsx src/index.ts",
+    "setup:memory": "tsx scripts/setup-memory.ts",
+    "setup:pipe": "tsx scripts/setup-pipe.ts",
+    "check": "tsx scripts/check.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "clsx": "^2.1.1",
     "dotenv": "^16.5.0",

@@ -1,13 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
-const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"] });
+const spaceGrotesk = Space_Grotesk({ 
+  subsets: ["latin"],
+  variable: "--font-space",
+  weight: ["400", "500", "600", "700"],
+});
+
+const mono = IBM_Plex_Mono({ 
+  subsets: ["latin"], 
+  weight: ["400", "500"],
+  variable: "--font-mono",
+});
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
-  title: "Agentic RAG | Langbase",
-  description: "Advanced AI Agent with Semantic Memory",
+  title: "Agentic-RAG",
+  description: "Query your documents with AI",
 };
 
 export default function RootLayout({
@@ -17,7 +31,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className} selection:bg-white selection:text-black`}>
+      <body className={`${spaceGrotesk.variable} ${mono.variable} bg-black text-white antialiased`}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-500 focus:text-black focus:outline-none"
+        >
+          Skip to main
+        </a>
         {children}
       </body>
     </html>
