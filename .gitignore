@@ -59,7 +59,3 @@ Thumbs.db
 
 # Uploaded user content
 uploads/
-
-# Source file types
-*.txt
-*.md
