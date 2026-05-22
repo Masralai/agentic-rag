@@ -1,4 +1,4 @@
-# Agentic RAG
+# Psynapse
 
 A TypeScript-based project that implements a Retrieval-Augmented Generation (RAG) system with AI agents for intelligent document processing and querying.
 
@@ -25,8 +25,8 @@ This project implements an AI-powered document processing system that combines m
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/agentic-rag.git
-cd agentic-rag
+git clone https://github.com/yourusername/psynapse.git
+cd psynapse
 ```
 
 2. Install dependencies:
@@ -44,7 +44,7 @@ LANGBASE_API_KEY=your_api_key_here
 ## Project Structure
 
 ```
-agentic-rag/
+psynapse/
 ├── src/
 │   ├── agents.ts        # AI agent implementations and configurations
 │   ├── create-memory.ts # Memory creation and management
