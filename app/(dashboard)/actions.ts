@@ -69,6 +69,11 @@ export async function listMessages(notebookId: string) {
   return notebookService.listMessages(notebookId);
 }
 
+export async function getSourceContent(sourceId: string) {
+  await requireAuth();
+  return notebookService.getSourceContent(sourceId);
+}
+
 export async function generateSummary(notebookId: string, type: SummaryType) {
   await requireAuth();
   return summarize(notebookId, type);
