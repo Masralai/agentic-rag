@@ -54,6 +54,25 @@ body {
   background: #444;
 }
 
+/* Inline citation chips */
+sup.citation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 0.25rem;
+  vertical-align: super;
+  line-height: 1;
+  cursor: default;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

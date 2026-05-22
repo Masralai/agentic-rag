@@ -6,12 +6,21 @@ import { addSource, removeSource, listSources, listMessages, generateSummary, ge
 import { FileText, Send, Plus, X, Loader2, BookOpen, HelpCircle, File as FileIcon, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Source, ChatMessage } from "@/modules/notebook/types";
 
@@ -32,9 +41,11 @@ export default function NotebookPage() {
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSourcesOpen, setMobileSourcesOpen] = useState(false);
   const [previewSourceId, setPreviewSourceId] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [sourceToRemove, setSourceToRemove] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -172,6 +183,63 @@ export default function NotebookPage() {
     s.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
+  function renderContent(content: string) {
+    const processed = content.replace(
+      /\[(\d+)\]/g,
+      '<sup class="citation">[$1]</sup>',
+    );
+    return (
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+        {processed}
+      </ReactMarkdown>
+    );
+  }
+
+  function MobileSourcesPanel({
+    sources,
+    previewSourceId,
+    onPreview,
+    onRemove,
+  }: {
+    sources: Source[];
+    previewSourceId: string | null;
+    onPreview: (s: Source) => void;
+    onRemove: (id: string) => void;
+  }) {
+    return (
+      <div className="max-h-48 overflow-y-auto border border-zinc-900 rounded-lg p-2 space-y-1">
+        {sources.length === 0 && (
+          <p className="text-xs text-zinc-700 px-2 py-4 text-center">No sources yet</p>
+        )}
+        {sources.map((src) => {
+          const Icon = fileTypeIcons[src.type] || FileText;
+          return (
+            <div
+              key={src.id}
+              onClick={() => onPreview(src)}
+              className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
+                previewSourceId === src.id ? "bg-zinc-800" : "hover:bg-zinc-900"
+              }`}
+            >
+              <Icon size={14} className="text-zinc-500 shrink-0" />
+              <span className="text-xs truncate flex-1 text-zinc-400">{src.name}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                src.status === "ready" ? "bg-emerald-900/50 text-emerald-400" :
+                src.status === "failed" ? "bg-red-900/50 text-red-400" :
+                "bg-zinc-800 text-zinc-500"
+              }`}>
+                {src.status}
+              </span>
+              <button onClick={(e) => { e.stopPropagation(); onRemove(src.id); }} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all shrink-0">
+                <X size={14} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex flex-1 min-h-0">
@@ -195,9 +263,7 @@ export default function NotebookPage() {
                 >
                   {msg.role === "assistant" ? (
                     <div className="prose prose-invert prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content || (streaming ? "..." : "")}
-                      </ReactMarkdown>
+                      {renderContent(msg.content || (streaming ? "..." : ""))}
                       {msg.sources.length > 0 && (
                         <div className="mt-4 pt-3 border-t border-zinc-800">
                           <p className="text-xs text-zinc-500 mb-2 font-medium">SOURCES</p>
@@ -223,7 +289,24 @@ export default function NotebookPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-zinc-900 p-4">
+          <div className="border-t border-zinc-900 p-4 space-y-3">
+            <button
+              onClick={() => setMobileSourcesOpen(!mobileSourcesOpen)}
+              className="md:hidden w-full h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg"
+            >
+              <FileText size={14} />
+              {mobileSourcesOpen ? "Hide sources" : `Sources (${sources.length})`}
+            </button>
+
+            {mobileSourcesOpen && (
+              <MobileSourcesPanel
+                sources={filteredSources}
+                previewSourceId={previewSourceId}
+                onPreview={handlePreviewSource}
+                onRemove={(id) => setSourceToRemove(id)}
+              />
+            )}
+
             <form onSubmit={handleSubmit} className="flex gap-3 max-w-3xl mx-auto">
               <input
                 value={query}
@@ -243,7 +326,7 @@ export default function NotebookPage() {
           </div>
         </div>
 
-        <aside className="w-80 shrink-0 border-l border-zinc-900 flex flex-col overflow-hidden">
+        <aside className="hidden md:flex w-80 shrink-0 border-l border-zinc-900 flex-col overflow-hidden">
           <div className="p-4 border-b border-zinc-900 space-y-2">
             <div className="flex gap-2">
               <label className="flex-1 h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg cursor-pointer">
@@ -335,7 +418,7 @@ export default function NotebookPage() {
                       {src.status}
                     </span>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleRemoveSource(src.id); }}
+                      onClick={(e) => { e.stopPropagation(); setSourceToRemove(src.id); }}
                       className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all shrink-0"
                     >
                       <X size={14} />
@@ -371,6 +454,34 @@ export default function NotebookPage() {
           </ScrollArea>
         </SheetContent>
       </Sheet>
+
+      <Dialog
+        open={!!sourceToRemove}
+        onOpenChange={(open) => { if (!open) setSourceToRemove(null); }}
+      >
+        <DialogContent className="bg-zinc-950 border-zinc-900 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-sm text-zinc-300">Remove source?</DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500 mt-2">
+              This will permanently delete the source and its chunks from the knowledge base.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <DialogClose className="h-9 px-4 text-xs bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-lg">
+              Cancel
+            </DialogClose>
+            <button
+              onClick={() => {
+                if (sourceToRemove) handleRemoveSource(sourceToRemove);
+                setSourceToRemove(null);
+              }}
+              className="h-9 px-4 text-xs bg-red-600 hover:bg-red-500 text-white transition-colors rounded-lg"
+            >
+              Remove
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
