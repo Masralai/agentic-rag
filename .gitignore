@@ -7,6 +7,9 @@ out/
 dist/
 dist-ssr/
 
+# K8s env copy
+k8s/.env.k8s
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
