@@ -6,9 +6,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup:memory": "tsx scripts/setup-memory.ts",
-    "setup:pipe": "tsx scripts/setup-pipe.ts",
-    "check": "tsx scripts/check.ts",
+
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",

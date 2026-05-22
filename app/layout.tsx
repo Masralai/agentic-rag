@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Agentic-RAG",
+  title: "Psynapse",
   description: "Query your documents with AI",
 };
 
