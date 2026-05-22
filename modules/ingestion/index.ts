@@ -1,11 +1,11 @@
 import type { SourceInput, ParsedContent, SourceParser } from "./types";
-import type { Source } from "@/modules/notebook/types";
+import type { Source } from "@/modules/node/types";
 import { PdfParser } from "./parsers/pdf";
 import { DocxParser } from "./parsers/docx";
 import { TxtParser } from "./parsers/txt";
 import { WebParser } from "./parsers/web";
 import { YouTubeParser } from "./parsers/youtube";
-import { notebookService } from "@/modules/notebook";
+import { nodeService } from "@/modules/node";
 import { langbase } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
 
@@ -41,13 +41,16 @@ export async function ingest(input: SourceInput): Promise<Source> {
   const parser = parsers[input.type];
   if (!parser) throw new Error(`No parser for source type: ${input.type}`);
 
-  const sourceRecord = await notebookService.addSource({
-    ...input,
+  const sourceRecord = await nodeService.addSource({
+    nodeId: input.nodeId,
+    type: input.type,
+    name: input.name,
+    url: input.url,
     status: "pending",
-  });
+  } as Parameters<typeof nodeService.addSource>[0]);
 
   try {
-    await notebookService.updateSource(sourceRecord.id, { status: "processing" });
+    await nodeService.updateSource(sourceRecord.id, { status: "processing" });
 
     const parsed: ParsedContent = await parser.parse(input);
     const chunks = chunkText(parsed.text);
@@ -61,7 +64,7 @@ export async function ingest(input: SourceInput): Promise<Source> {
       });
     }
 
-    await notebookService.updateSource(sourceRecord.id, {
+    await nodeService.updateSource(sourceRecord.id, {
       status: "ready",
       rawText: parsed.text,
       metadata: parsed.metadata as Record<string, unknown>,
@@ -69,7 +72,7 @@ export async function ingest(input: SourceInput): Promise<Source> {
 
     return { ...sourceRecord, status: "ready", metadata: parsed.metadata as Record<string, unknown>, rawText: parsed.text };
   } catch (error) {
-    await notebookService.updateSource(sourceRecord.id, { status: "failed" });
+    await nodeService.updateSource(sourceRecord.id, { status: "failed" });
     throw error;
   }
 }

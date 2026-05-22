@@ -1,38 +1,38 @@
 "use server";
 
 import { requireAuth } from "@/modules/auth";
-import { notebookService } from "@/modules/notebook";
+import { nodeService } from "@/modules/node";
 import { ingest } from "@/modules/ingestion";
 import { summarize, type SummaryType } from "@/modules/rag";
 import { revalidatePath } from "next/cache";
 
-export async function createNotebook(name: string) {
+export async function createNode(name: string) {
   const { userId } = await requireAuth();
-  const notebook = await notebookService.createNotebook(userId, name);
+  const node = await nodeService.createNode(userId, name);
   revalidatePath("/");
-  return notebook;
+  return node;
 }
 
-export async function listNotebooks() {
+export async function listNodes() {
   const { userId } = await requireAuth();
-  return notebookService.listNotebooks(userId);
+  return nodeService.listNodes(userId);
 }
 
-export async function renameNotebook(id: string, name: string) {
+export async function renameNode(id: string, name: string) {
   await requireAuth();
-  const notebook = await notebookService.renameNotebook(id, name);
+  const node = await nodeService.renameNode(id, name);
   revalidatePath("/");
-  return notebook;
+  return node;
 }
 
-export async function deleteNotebook(id: string) {
+export async function deleteNode(id: string) {
   await requireAuth();
-  await notebookService.deleteNotebook(id);
+  await nodeService.deleteNode(id);
   revalidatePath("/");
 }
 
 export async function addSource(
-  notebookId: string,
+  nodeId: string,
   type: "pdf" | "docx" | "txt" | "web" | "youtube",
   formData: FormData,
 ) {
@@ -42,7 +42,7 @@ export async function addSource(
   const url = formData.get("url") as string | null;
 
   await ingest({
-    notebookId,
+    nodeId,
     type,
     file: file ? Buffer.from(await file.arrayBuffer()) : undefined,
     fileName: file?.name,
@@ -50,31 +50,31 @@ export async function addSource(
     name: file?.name || url || undefined,
   });
 
-  revalidatePath(`/notebooks/${notebookId}`);
+  revalidatePath(`/nodes/${nodeId}`);
 }
 
-export async function removeSource(sourceId: string, notebookId: string) {
+export async function removeSource(sourceId: string, nodeId: string) {
   await requireAuth();
-  await notebookService.removeSource(sourceId);
-  revalidatePath(`/notebooks/${notebookId}`);
+  await nodeService.removeSource(sourceId);
+  revalidatePath(`/nodes/${nodeId}`);
 }
 
-export async function listSources(notebookId: string) {
+export async function listSources(nodeId: string) {
   await requireAuth();
-  return notebookService.listSources(notebookId);
+  return nodeService.listSources(nodeId);
 }
 
-export async function listMessages(notebookId: string) {
+export async function listMessages(nodeId: string) {
   await requireAuth();
-  return notebookService.listMessages(notebookId);
+  return nodeService.listMessages(nodeId);
 }
 
 export async function getSourceContent(sourceId: string) {
   await requireAuth();
-  return notebookService.getSourceContent(sourceId);
+  return nodeService.getSourceContent(sourceId);
 }
 
-export async function generateSummary(notebookId: string, type: SummaryType) {
+export async function generateSummary(nodeId: string, type: SummaryType) {
   await requireAuth();
-  return summarize(notebookId, type);
+  return summarize(nodeId, type);
 }

@@ -11,7 +11,7 @@ describe("Ingestion parsers", () => {
     it("extracts text from a .txt file", async () => {
       const buffer = readFileSync(fixturePath);
       const result = await parser.parse({
-        notebookId: "nb1",
+        nodeId: "nb1",
         type: "txt",
         file: buffer,
         fileName: "sample.txt",
@@ -23,13 +23,13 @@ describe("Ingestion parsers", () => {
 
     it("throws without a file buffer", async () => {
       await expect(
-        parser.parse({ notebookId: "nb1", type: "txt" }),
+        parser.parse({ nodeId: "nb1", type: "txt" }),
       ).rejects.toThrow("TXT parser requires a file buffer");
     });
 
     it("handles empty buffer", async () => {
       const result = await parser.parse({
-        notebookId: "nb1",
+        nodeId: "nb1",
         type: "txt",
         file: Buffer.from(""),
       });
@@ -38,7 +38,7 @@ describe("Ingestion parsers", () => {
 
     it("handles UTF-8 content", async () => {
       const result = await parser.parse({
-        notebookId: "nb1",
+        nodeId: "nb1",
         type: "txt",
         file: Buffer.from("café résumé ñoño", "utf-8"),
       });

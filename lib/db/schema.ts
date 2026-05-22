@@ -1,6 +1,6 @@
 import { pgTable, text, uuid, timestamp, jsonb } from "drizzle-orm/pg-core";
 
-export const notebooks = pgTable("notebooks", {
+export const nodes = pgTable("nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
   name: text("name").notNull(),
@@ -10,8 +10,8 @@ export const notebooks = pgTable("notebooks", {
 
 export const sources = pgTable("sources", {
   id: uuid("id").defaultRandom().primaryKey(),
-  notebookId: uuid("notebook_id")
-    .references(() => notebooks.id, { onDelete: "cascade" })
+  nodeId: uuid("node_id")
+    .references(() => nodes.id, { onDelete: "cascade" })
     .notNull(),
   type: text("type", { enum: ["pdf", "docx", "txt", "web", "youtube"] }).notNull(),
   name: text("name").notNull(),
@@ -25,8 +25,8 @@ export const sources = pgTable("sources", {
 
 export const chatMessages = pgTable("chat_messages", {
   id: uuid("id").defaultRandom().primaryKey(),
-  notebookId: uuid("notebook_id")
-    .references(() => notebooks.id, { onDelete: "cascade" })
+  nodeId: uuid("node_id")
+    .references(() => nodes.id, { onDelete: "cascade" })
     .notNull(),
   role: text("role", { enum: ["user", "assistant"] }).notNull(),
   content: text("content").notNull(),

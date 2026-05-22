@@ -1,7 +1,7 @@
-import type { SourceType, Source } from "@/modules/notebook/types";
+import type { SourceType, Source } from "@/modules/node/types";
 
 export interface SourceInput {
-  notebookId: string;
+  nodeId: string;
   type: SourceType;
   file?: Buffer;
   fileName?: string;

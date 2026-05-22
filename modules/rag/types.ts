@@ -7,7 +7,7 @@ export interface StreamChunk {
 
 export interface Summary {
   id: string;
-  notebookId: string;
+  nodeId: string;
   type: "study-guide" | "faq";
   content: string;
   createdAt: Date;

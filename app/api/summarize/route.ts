@@ -22,13 +22,13 @@ export async function POST(req: Request) {
     });
   }
 
-  const { notebookId, type } = await req.json();
+  const { nodeId, type } = await req.json();
 
-  if (!notebookId || !type) {
-    return new Response("Missing notebookId or type", { status: 400 });
+  if (!nodeId || !type) {
+    return new Response("Missing nodeId or type", { status: 400 });
   }
 
-  const result = await summarize(notebookId, type as SummaryType);
+  const result = await summarize(nodeId, type as SummaryType);
 
   return Response.json(result, {
     headers: { "X-RateLimit-Remaining": String(remaining) },

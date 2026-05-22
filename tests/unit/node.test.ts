@@ -1,23 +1,23 @@
 import { describe, it, expect } from "vitest";
-import type { Notebook, Source, ChatMessage, SourceInput } from "@/modules/notebook/types";
+import type { Node, Source, ChatMessage, SourceInput } from "@/modules/node/types";
 
-describe("Notebook types", () => {
-  it("validates notebook shape", () => {
-    const nb: Notebook = {
+describe("Node types", () => {
+  it("validates node shape", () => {
+    const nb: Node = {
       id: "123",
       userId: "user1",
-      name: "Test Notebook",
+      name: "Test Node",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    expect(nb.name).toBe("Test Notebook");
+    expect(nb.name).toBe("Test Node");
     expect(nb.userId).toBe("user1");
   });
 
   it("validates source shape", () => {
     const src: Source = {
       id: "s1",
-      notebookId: "nb1",
+      nodeId: "nb1",
       type: "pdf",
       name: "doc.pdf",
       status: "ready",
@@ -31,7 +31,7 @@ describe("Notebook types", () => {
   it("validates chat message shape", () => {
     const msg: ChatMessage = {
       id: "m1",
-      notebookId: "nb1",
+      nodeId: "nb1",
       role: "user",
       content: "hello",
       sources: [],
@@ -43,7 +43,7 @@ describe("Notebook types", () => {
 
   it("validates source input types", () => {
     const input: SourceInput = {
-      notebookId: "nb1",
+      nodeId: "nb1",
       type: "web",
       url: "https://example.com",
     };

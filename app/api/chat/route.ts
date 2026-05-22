@@ -22,13 +22,13 @@ export async function POST(req: Request) {
     });
   }
 
-  const { notebookId, query } = await req.json();
+  const { nodeId, query } = await req.json();
 
-  if (!notebookId || !query) {
-    return new Response("Missing notebookId or query", { status: 400 });
+  if (!nodeId || !query) {
+    return new Response("Missing nodeId or query", { status: 400 });
   }
 
-  const stream = await chatToStream(notebookId, query);
+  const stream = await chatToStream(nodeId, query);
 
   return new Response(stream, {
     headers: {

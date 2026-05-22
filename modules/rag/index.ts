@@ -1,18 +1,18 @@
 import type { Summary, SummaryType } from "./types";
 import { buildChatPrompt, buildSummaryPrompt } from "./prompts";
-import { notebookService } from "@/modules/notebook";
+import { nodeService } from "@/modules/node";
 import { langbase, fromReadableStream } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
 
 export type { Summary, SummaryType } from "./types";
 
 export async function chatToStream(
-  notebookId: string,
+  nodeId: string,
   query: string,
 ): Promise<ReadableStream> {
   const encoder = new TextEncoder();
 
-  const history = await notebookService.listMessages(notebookId);
+  const history = await nodeService.listMessages(nodeId);
   const recentHistory = history.slice(-10);
 
   const chunks = await langbase.memories.retrieve({
@@ -30,7 +30,7 @@ export async function chatToStream(
     });
   }
 
-  await notebookService.addMessage(notebookId, "user", query);
+  await nodeService.addMessage(nodeId, "user", query);
 
   const systemPrompt = buildChatPrompt(chunks, recentHistory);
   const response = await langbase.pipes.run({
@@ -60,7 +60,7 @@ export async function chatToStream(
           }
         }
 
-        await notebookService.addMessage(notebookId, "assistant", fullResponse, sources);
+        await nodeService.addMessage(nodeId, "assistant", fullResponse, sources);
         controller.close();
       } catch (error) {
         console.error("RAG stream error:", error);
@@ -72,16 +72,16 @@ export async function chatToStream(
 }
 
 export async function summarize(
-  notebookId: string,
+  nodeId: string,
   type: SummaryType,
 ): Promise<Summary> {
-  const sources = await notebookService.listSources(notebookId);
+  const sources = await nodeService.listSources(nodeId);
   const sourceTexts = await Promise.all(
     sources
       .filter((s) => s.status === "ready" && s.rawText)
       .map(async (s) => ({
         name: s.name,
-        text: (await notebookService.getSourceContent(s.id)) || "",
+        text: (await nodeService.getSourceContent(s.id)) || "",
       })),
   );
 
@@ -95,7 +95,7 @@ export async function summarize(
 
   return {
     id: crypto.randomUUID(),
-    notebookId,
+    nodeId,
     type,
     content: completion || "",
     createdAt: new Date(),

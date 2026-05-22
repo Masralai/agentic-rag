@@ -22,7 +22,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Source, ChatMessage } from "@/modules/notebook/types";
+import type { Source, ChatMessage } from "@/modules/node/types";
 
 const fileTypeIcons: Record<string, any> = {
   pdf: FileText,
@@ -32,8 +32,8 @@ const fileTypeIcons: Record<string, any> = {
   youtube: FileIcon,
 };
 
-export default function NotebookPage() {
-  const { notebookId } = useParams() as { notebookId: string };
+export default function NodePage() {
+  const { nodeId } = useParams() as { nodeId: string };
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
@@ -50,12 +50,12 @@ export default function NotebookPage() {
 
   const fetchData = useCallback(async () => {
     const [srcs, msgs] = await Promise.all([
-      listSources(notebookId),
-      listMessages(notebookId),
+      listSources(nodeId),
+      listMessages(nodeId),
     ]);
     setSources(srcs);
     setMessages(msgs);
-  }, [notebookId]);
+  }, [nodeId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView(); }, [messages, streaming]);
@@ -66,7 +66,7 @@ export default function NotebookPage() {
 
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
-      notebookId,
+      nodeId,
       role: "user",
       content: query,
       sources: [],
@@ -80,7 +80,7 @@ export default function NotebookPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notebookId, query: userMsg.content }),
+        body: JSON.stringify({ nodeId, query: userMsg.content }),
       });
 
       if (!res.ok) throw new Error("Stream failed");
@@ -91,7 +91,7 @@ export default function NotebookPage() {
 
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), notebookId, role: "assistant", content: "", sources: [], createdAt: new Date() },
+        { id: crypto.randomUUID(), nodeId, role: "assistant", content: "", sources: [], createdAt: new Date() },
       ]);
 
       while (reader) {
@@ -113,7 +113,7 @@ export default function NotebookPage() {
         ...prev,
         {
           id: crypto.randomUUID(),
-          notebookId,
+          nodeId,
           role: "assistant",
           content: "Error: failed to get response",
           sources: [],
@@ -139,7 +139,7 @@ export default function NotebookPage() {
 
     const formData = new FormData();
     formData.append("file", file);
-    await addSource(notebookId, type, formData);
+    await addSource(nodeId, type, formData);
     fetchData();
   };
 
@@ -150,19 +150,19 @@ export default function NotebookPage() {
     const formData = new FormData();
     formData.append("url", url);
     formData.append("name", url);
-    await addSource(notebookId, type, formData);
+    await addSource(nodeId, type, formData);
     fetchData();
   };
 
   const handleSummary = async (type: "study-guide" | "faq") => {
     setSummaryLoading(true);
-    const result = await generateSummary(notebookId, type);
+    const result = await generateSummary(nodeId, type);
     setSummary(result.content);
     setSummaryLoading(false);
   };
 
   const handleRemoveSource = async (id: string) => {
-    await removeSource(id, notebookId);
+    await removeSource(id, nodeId);
     fetchData();
   };
 
