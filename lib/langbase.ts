@@ -1,4 +1,4 @@
-import { Langbase } from "langbase";
+import { Langbase, fromReadableStream } from "langbase";
 
 const apiKey = process.env.LANGBASE_API_KEY;
 
@@ -9,5 +9,7 @@ if (!apiKey) {
 export const langbase = new Langbase({
   apiKey,
 });
+
+export { fromReadableStream };
 
 export default langbase;

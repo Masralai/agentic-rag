@@ -1,0 +1,41 @@
+export function buildChatPrompt(chunks: any[], history: { role: string; content: string }[]): string {
+  const chunksText = chunks
+    .map(
+      (chunk, i) =>
+        `[${i + 1}] ${chunk.text}\nSource: ${chunk.documentName || chunk.source || "Unknown"}`,
+    )
+    .join("\n---\n");
+
+  const historyText = history
+    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n");
+
+  return `
+You are a helpful AI assistant. Answer questions based ONLY on the provided context.
+Cite sources in brackets like [1]. At the end, list each source with its number and document name.
+If you don't know, say so.
+
+${history.length > 0 ? `Conversation so far:\n${historyText}\n` : ""}
+
+Context:
+${chunksText || "No context provided."}`;
+}
+
+export function buildSummaryPrompt(sources: { name: string; text: string }[], type: "study-guide" | "faq"): string {
+  const sourcesText = sources
+    .map((s) => `--- ${s.name} ---\n${s.text}`)
+    .join("\n\n");
+
+  const instructions =
+    type === "study-guide"
+      ? "Generate a structured study guide covering key concepts, important points, and takeaways from the sources."
+      : "Generate a list of frequently asked questions (FAQs) with answers based on the sources.";
+
+  return `
+${instructions}
+Base everything on the provided source material.
+Cite sources in brackets like [1] where applicable.
+
+Sources:
+${sourcesText}`;
+}

@@ -5,6 +5,7 @@ import { DocxParser } from "./parsers/docx";
 import { TxtParser } from "./parsers/txt";
 import { WebParser } from "./parsers/web";
 import { YouTubeParser } from "./parsers/youtube";
+import { notebookService } from "@/modules/notebook";
 import { langbase } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
 
@@ -40,27 +41,35 @@ export async function ingest(input: SourceInput): Promise<Source> {
   const parser = parsers[input.type];
   if (!parser) throw new Error(`No parser for source type: ${input.type}`);
 
-  const parsed: ParsedContent = await parser.parse(input);
-  const chunks = chunkText(parsed.text);
+  const sourceRecord = await notebookService.addSource({
+    ...input,
+    status: "pending",
+  });
 
-  for (const chunk of chunks) {
-    await langbase.memories.documents.upload({
-      memoryName: CONFIG.MEMORY_NAME,
-      contentType: "text/plain",
-      documentName: `${input.name || "source"}-${Date.now()}`,
-      document: Buffer.from(chunk),
+  try {
+    await notebookService.updateSource(sourceRecord.id, { status: "processing" });
+
+    const parsed: ParsedContent = await parser.parse(input);
+    const chunks = chunkText(parsed.text);
+
+    for (const chunk of chunks) {
+      await langbase.memories.documents.upload({
+        memoryName: CONFIG.MEMORY_NAME,
+        contentType: "text/plain",
+        documentName: `${input.name || "source"}-${Date.now()}`,
+        document: Buffer.from(chunk),
+      });
+    }
+
+    await notebookService.updateSource(sourceRecord.id, {
+      status: "ready",
+      rawText: parsed.text,
+      metadata: parsed.metadata as Record<string, unknown>,
     });
-  }
 
-  // TODO: Phase 1 — persist source metadata via notebook module
-  return {
-    id: "",
-    notebookId: input.notebookId,
-    type: input.type,
-    name: input.name || input.url || "unknown",
-    status: "ready",
-    metadata: parsed.metadata,
-    rawText: parsed.text,
-    createdAt: new Date(),
-  };
+    return { ...sourceRecord, status: "ready", metadata: parsed.metadata as Record<string, unknown>, rawText: parsed.text };
+  } catch (error) {
+    await notebookService.updateSource(sourceRecord.id, { status: "failed" });
+    throw error;
+  }
 }

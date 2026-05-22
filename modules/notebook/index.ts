@@ -11,7 +11,10 @@ export const notebookService = {
   renameNotebook: (id: string, name: string) => repo.renameNotebook(id, name),
   deleteNotebook: (id: string) => repo.deleteNotebook(id),
 
-  addSource: (input: SourceInput) => repo.addSource(input),
+  addSource: (input: SourceInput & { status?: string; rawText?: string; metadata?: Record<string, unknown> }) =>
+    repo.addSource(input),
+  updateSource: (id: string, data: { status?: string; rawText?: string; metadata?: Record<string, unknown> }) =>
+    repo.updateSource(id, data),
   removeSource: (id: string) => repo.removeSource(id),
   listSources: (notebookId: string) => repo.listSources(notebookId),
   getSourceContent: (id: string) => repo.getSourceContent(id),

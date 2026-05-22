@@ -1,16 +1,19 @@
 import type { SourceParser, ParsedContent, SourceInput } from "../types";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 
 export class PdfParser implements SourceParser {
   async parse(input: SourceInput): Promise<ParsedContent> {
     if (!input.file) throw new Error("PDF parser requires a file buffer");
-    const data = await pdfParse(input.file);
+
+    const pdf = new PDFParse({ data: input.file });
+    const textResult = await pdf.getText();
+
     return {
-      text: data.text,
+      text: textResult.text,
       metadata: {
         parser: "pdf",
         fileName: input.fileName,
-        pages: data.numpages,
+        pages: textResult.total,
       },
     };
   }

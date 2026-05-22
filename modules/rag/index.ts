@@ -1,42 +1,103 @@
-import type { StreamChunk, Summary, SummaryType } from "./types";
-import { langbase } from "@/lib/langbase";
+import type { Summary, SummaryType } from "./types";
+import { buildChatPrompt, buildSummaryPrompt } from "./prompts";
+import { notebookService } from "@/modules/notebook";
+import { langbase, fromReadableStream } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
 
-export type { StreamChunk, Summary, SummaryType } from "./types";
+export type { Summary, SummaryType } from "./types";
 
-export async function* chat(
+export async function chatToStream(
   notebookId: string,
   query: string,
-  history: { role: "user" | "assistant"; content: string }[],
-): AsyncGenerator<StreamChunk> {
-  try {
-    // TODO: Phase 3 — retrieve memory chunks, build prompt with history, stream
-    const { completion } = await langbase.pipes.run({
-      stream: false,
-      name: CONFIG.PIPE_NAME,
-      messages: [
-        { role: "system", content: "TODO: build system prompt with chunks + history" },
-        { role: "user", content: query },
-      ],
-    });
+): Promise<ReadableStream> {
+  const encoder = new TextEncoder();
 
-    yield { type: "token", content: completion };
-    yield { type: "done", sources: [] };
-  } catch (error) {
-    yield { type: "error", error: "Failed to process query." };
+  const history = await notebookService.listMessages(notebookId);
+  const recentHistory = history.slice(-10);
+
+  const chunks = await langbase.memories.retrieve({
+    query,
+    topK: 4,
+    memory: [{ name: CONFIG.MEMORY_NAME }],
+  });
+
+  if (!chunks || chunks.length === 0) {
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(JSON.stringify({ type: "no-results" })));
+        controller.close();
+      },
+    });
   }
+
+  await notebookService.addMessage(notebookId, "user", query);
+
+  const systemPrompt = buildChatPrompt(chunks, recentHistory);
+  const response = await langbase.pipes.run({
+    stream: true,
+    name: CONFIG.PIPE_NAME,
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: query },
+    ],
+  });
+
+  const runner = fromReadableStream(response.stream);
+  const sources = Array.from(
+    new Set(chunks.map((c: any) => c.documentName || c.source || "Unknown")),
+  );
+
+  let fullResponse = "";
+
+  return new ReadableStream({
+    async start(controller) {
+      try {
+        for await (const chunk of runner) {
+          const text = chunk.choices?.[0]?.delta?.content ?? "";
+          if (text) {
+            fullResponse += text;
+            controller.enqueue(encoder.encode(text));
+          }
+        }
+
+        await notebookService.addMessage(notebookId, "assistant", fullResponse, sources);
+        controller.close();
+      } catch (error) {
+        console.error("RAG stream error:", error);
+        controller.enqueue(encoder.encode(JSON.stringify({ type: "error", message: "Stream failed" })));
+        controller.close();
+      }
+    },
+  });
 }
 
 export async function summarize(
   notebookId: string,
   type: SummaryType,
 ): Promise<Summary> {
-  // TODO: Phase 4 — retrieve all source texts, build summary prompt, call Langbase
+  const sources = await notebookService.listSources(notebookId);
+  const sourceTexts = await Promise.all(
+    sources
+      .filter((s) => s.status === "ready" && s.rawText)
+      .map(async (s) => ({
+        name: s.name,
+        text: (await notebookService.getSourceContent(s.id)) || "",
+      })),
+  );
+
+  const prompt = buildSummaryPrompt(sourceTexts, type);
+
+  const { completion } = await langbase.pipes.run({
+    stream: false,
+    name: CONFIG.PIPE_NAME,
+    messages: [{ role: "system", content: prompt }],
+  });
+
   return {
-    id: "",
+    id: crypto.randomUUID(),
     notebookId,
     type,
-    content: "",
+    content: completion || "",
     createdAt: new Date(),
   };
 }

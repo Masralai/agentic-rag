@@ -30,14 +30,16 @@ export class NotebookRepo {
     await db.delete(notebooks).where(eq(notebooks.id, id));
   }
 
-  async addSource(input: SourceInput & { status?: string }): Promise<Source> {
+  async addSource(input: SourceInput & { status?: string; rawText?: string; metadata?: Record<string, unknown> }): Promise<Source> {
     const [s] = await db
       .insert(sources)
       .values({
         notebookId: input.notebookId,
         type: input.type,
         name: input.name || "unknown",
-        status: (input.status as any) || "ready",
+        status: (input.status as any) || "pending",
+        rawText: input.rawText,
+        metadata: input.metadata as any,
       })
       .returning();
     return toSource(s);
@@ -61,6 +63,20 @@ export class NotebookRepo {
       .from(sources)
       .where(eq(sources.id, id));
     return s?.rawText || "";
+  }
+
+  async updateSource(
+    id: string,
+    data: { status?: string; rawText?: string; metadata?: Record<string, unknown> },
+  ): Promise<void> {
+    await db
+      .update(sources)
+      .set({
+        ...(data.status ? { status: data.status as any } : {}),
+        ...(data.rawText !== undefined ? { rawText: data.rawText } : {}),
+        ...(data.metadata ? { metadata: data.metadata as any } : {}),
+      })
+      .where(eq(sources.id, id));
   }
 
   async searchSources(notebookId: string, query: string): Promise<Source[]> {
