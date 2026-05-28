@@ -38,7 +38,6 @@ export async function generate(
     stream: false,
     name: CONFIG.PIPE_NAME,
     messages,
-    ...(CONFIG.LLM_API_KEY ? { llmKey: CONFIG.LLM_API_KEY } : {}),
   });
   return completion || "";
 }
@@ -64,7 +63,6 @@ export async function generateStream(
     stream: true,
     name: CONFIG.PIPE_NAME,
     messages,
-    ...(CONFIG.LLM_API_KEY ? { llmKey: CONFIG.LLM_API_KEY } : {}),
   });
 
   const runner = fromReadableStream(response.stream);
