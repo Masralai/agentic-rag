@@ -1,8 +1,9 @@
 import type { Summary, SummaryType } from "./types";
 import { buildChatPrompt, buildSummaryPrompt } from "./prompts";
 import { nodeService } from "@/modules/node";
-import { langbase, fromReadableStream } from "@/lib/langbase";
+import { langbase } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
+import { generate, generateStream } from "@/modules/llm";
 
 export type { Summary, SummaryType } from "./types";
 
@@ -33,33 +34,28 @@ export async function chatToStream(
   await nodeService.addMessage(nodeId, "user", query);
 
   const systemPrompt = buildChatPrompt(chunks, recentHistory);
-  const response = await langbase.pipes.run({
-    stream: true,
-    name: CONFIG.PIPE_NAME,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: query },
-    ],
-  });
+  const stream = await generateStream(systemPrompt, query);
 
-  const runner = fromReadableStream(response.stream);
   const sources = Array.from(
     new Set(chunks.map((c: any) => c.documentName || c.source || "Unknown")),
   );
-
   let fullResponse = "";
+
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
 
   return new ReadableStream({
     async start(controller) {
       try {
-        for await (const chunk of runner) {
-          const text = chunk.choices?.[0]?.delta?.content ?? "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const text = typeof value === "string" ? value : decoder.decode(value, { stream: true });
           if (text) {
             fullResponse += text;
             controller.enqueue(encoder.encode(text));
           }
         }
-
         await nodeService.addMessage(nodeId, "assistant", fullResponse, sources);
         controller.close();
       } catch (error) {
@@ -86,18 +82,13 @@ export async function summarize(
   );
 
   const prompt = buildSummaryPrompt(sourceTexts, type);
-
-  const { completion } = await langbase.pipes.run({
-    stream: false,
-    name: CONFIG.PIPE_NAME,
-    messages: [{ role: "system", content: prompt }],
-  });
+  const content = await generate(prompt);
 
   return {
     id: crypto.randomUUID(),
     nodeId,
     type,
-    content: completion || "",
+    content: content || "",
     createdAt: new Date(),
   };
 }

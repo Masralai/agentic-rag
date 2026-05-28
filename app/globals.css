@@ -1,12 +1,87 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  /* Shadcn semantic tokens */
   --background: 0 0% 0%;
   --foreground: 0 0% 100%;
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 100%;
+  --popover: 0 0% 2%;
+  --popover-foreground: 0 0% 100%;
+  --primary: 160 84% 39%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 48%;
+  --accent: 160 84% 39%;
+  --accent-foreground: 0 0% 0%;
+  --destructive: 0 62% 47%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
+  --ring: 160 84% 39%;
+  --radius: 0rem;
+  --radius-md: 0rem;
+
+  /* DESIGN.md — Colors */
+  --color-midnight-ink: #000000;
+  --color-silver-whisper: #ffffff;
+  --color-lime-interface: #10b981;
+  --gradient-lime-interface: linear-gradient(90deg, rgb(16, 185, 129) 0px, rgb(16, 185, 129) 6px, rgba(0, 0, 0, 0) 6px, rgba(0, 0, 0, 0) 12px);
+  --color-dark-grid: #252525;
+  --color-mid-gray-border: #7a7a7a;
+  --color-faint-grid: #3d3d3d;
+  --color-glow-green: #597321;
+  --color-soft-lime: #314013;
+  --color-white-outlined-text: #c5c5c5;
+
+  /* DESIGN.md — Surfaces */
+  --surface-deep-space: #000000;
+  --surface-subtle-panel: #060606;
+  --surface-dark-card: #1f1f1f;
+  --surface-interactive-border: #252525;
+  --surface-elevated-accent: #313131;
+
+  /* DESIGN.md — Typography Scale */
+  --text-body: 14px;
+  --leading-body: 1.55;
+  --tracking-body: 0.03px;
+  --text-subheading: 20px;
+  --leading-subheading: 1.2;
+  --tracking-subheading: 0.01px;
+  --text-heading: 49px;
+  --leading-heading: 1.05;
+  --tracking-heading: -0.01px;
+  --text-heading-lg: 72px;
+  --leading-heading-lg: 1;
+  --tracking-heading-lg: -0.02px;
+  --text-display: 130px;
+  --leading-display: 0.88;
+  --tracking-display: -0.035px;
+
+  /* DESIGN.md — Spacing */
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-7: 7px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-14: 14px;
+  --spacing-16: 16px;
+  --spacing-18: 18px;
+  --spacing-20: 20px;
+  --spacing-22: 22px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-30: 30px;
+  --spacing-32: 32px;
+  --spacing-44: 44px;
+
+  /* DESIGN.md — Shadows */
+  --shadow-sm: rgba(16, 185, 129, 0.45) 0px 0px 8px 0px;
 }
 
 * {
@@ -21,7 +96,7 @@ body {
   overflow-x: hidden;
   background: #000;
   color: #fff;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: 'Inter Tight', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -31,13 +106,11 @@ body {
   color: #000;
 }
 
-/* Focus - solid ring, no blur */
 :focus-visible {
   outline: 2px solid #10b981;
   outline-offset: 2px;
 }
 
-/* Scrollbar - minimal */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -54,26 +127,35 @@ body {
   background: #444;
 }
 
-/* Inline citation chips */
 sup.citation {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
+  min-width: 1.4rem;
+  height: 1.4rem;
   padding: 0 0.25rem;
   font-size: 0.65rem;
   font-weight: 500;
   color: #10b981;
   background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  border-radius: 0.25rem;
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  border-radius: 0;
   vertical-align: super;
   line-height: 1;
   cursor: default;
 }
 
-/* Reduced motion */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -59,7 +59,7 @@ export async function ingest(input: SourceInput): Promise<Source> {
       await langbase.memories.documents.upload({
         memoryName: CONFIG.MEMORY_NAME,
         contentType: "text/plain",
-        documentName: `${input.name || "source"}-${Date.now()}`,
+        documentName: `${input.name ? input.name.replace(/\.[^/.]+$/, "") : "source"}-${Date.now()}.txt`,
         document: Buffer.from(chunk),
       });
     }

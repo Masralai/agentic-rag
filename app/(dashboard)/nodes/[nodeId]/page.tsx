@@ -207,9 +207,9 @@ export default function NodePage() {
     onRemove: (id: string) => void;
   }) {
     return (
-      <div className="max-h-48 overflow-y-auto border border-zinc-900 rounded-lg p-2 space-y-1">
+      <div className="max-h-48 overflow-y-auto border border-surface-border p-2 space-y-1">
         {sources.length === 0 && (
-          <p className="text-xs text-zinc-700 px-2 py-4 text-center">No sources yet</p>
+          <p className="text-xs text-text-faint px-2 py-4 text-center">No sources yet</p>
         )}
         {sources.map((src) => {
           const Icon = fileTypeIcons[src.type] || FileText;
@@ -217,20 +217,20 @@ export default function NodePage() {
             <div
               key={src.id}
               onClick={() => onPreview(src)}
-              className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                previewSourceId === src.id ? "bg-zinc-800" : "hover:bg-zinc-900"
+              className={`group flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer ${
+                previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
               }`}
             >
-              <Icon size={14} className="text-zinc-500 shrink-0" />
-              <span className="text-xs truncate flex-1 text-zinc-400">{src.name}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+              <Icon size={14} className="text-text-muted shrink-0" />
+              <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 ${
                 src.status === "ready" ? "bg-emerald-900/50 text-emerald-400" :
                 src.status === "failed" ? "bg-red-900/50 text-red-400" :
-                "bg-zinc-800 text-zinc-500"
+                "bg-surface-elevated text-text-muted"
               }`}>
                 {src.status}
               </span>
-              <button onClick={(e) => { e.stopPropagation(); onRemove(src.id); }} className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all shrink-0">
+              <button onClick={(e) => { e.stopPropagation(); onRemove(src.id); }} className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-all shrink-0">
                 <X size={14} />
               </button>
             </div>
@@ -240,14 +240,55 @@ export default function NodePage() {
     );
   }
 
+  function EmptyStateView({
+    onFileUpload,
+    onAddUrl,
+  }: {
+    onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onAddUrl: () => void;
+  }) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center max-w-lg mx-auto">
+          <div className="w-16 h-16 mx-auto mb-6 bg-surface-card flex items-center justify-center">
+            <FileText size={28} className="text-text-muted" />
+          </div>
+          <h2 className="text-xl font-bold text-text-outlined mb-2">Add sources to get started</h2>
+          <p className="text-sm text-text-muted mb-8 leading-relaxed">
+            Upload documents, add web pages, or paste YouTube links to build your knowledge base.
+            Once your sources are ready, you can ask questions and generate summaries.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <label className="flex items-center justify-center gap-2 h-12 px-6 bg-surface-card hover:bg-surface-elevated text-sm transition-colors cursor-pointer border border-surface-border">
+              <Plus size={16} />
+              Upload file
+              <input type="file" onChange={onFileUpload} className="hidden" accept=".pdf,.docx,.txt" />
+            </label>
+            <button
+              onClick={onAddUrl}
+              className="flex items-center justify-center gap-2 h-12 px-6 bg-surface-card hover:bg-surface-elevated text-sm transition-colors border border-surface-border"
+            >
+              <Plus size={16} />
+              Add URL
+            </button>
+          </div>
+          <p className="text-xs text-text-faint mt-6">Supports PDF, DOCX, TXT, web pages, and YouTube</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
+      {sources.length === 0 && messages.length === 0 ? (
+        <EmptyStateView onFileUpload={handleFileUpload} onAddUrl={handleAddUrl} />
+      ) : (
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && !summary && (
-              <div className="text-center text-zinc-600 mt-20">
-                <p className="text-2xl font-bold tracking-tight text-zinc-500">Ask anything</p>
+              <div className="text-center text-text-muted mt-20">
+                <p className="text-2xl font-bold tracking-tight text-text-muted">Ask anything</p>
                 <p className="text-sm mt-1">Query your documents with AI</p>
               </div>
             )}
@@ -257,21 +298,21 @@ export default function NodePage() {
                 <div
                   className={`max-w-2xl px-5 py-4 ${
                     msg.role === "user"
-                      ? "bg-zinc-800 rounded-2xl"
-                      : "bg-zinc-900 rounded-2xl"
+                      ? "bg-surface-elevated"
+                      : "bg-surface-card"
                   }`}
                 >
                   {msg.role === "assistant" ? (
                     <div className="prose prose-invert prose-sm max-w-none">
                       {renderContent(msg.content || (streaming ? "..." : ""))}
                       {msg.sources.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-zinc-800">
-                          <p className="text-xs text-zinc-500 mb-2 font-medium">SOURCES</p>
+                        <div className="mt-4 pt-3 border-t border-surface-border">
+                          <p className="text-xs text-text-muted mb-2 font-medium">SOURCES</p>
                           <div className="flex flex-wrap gap-2">
                             {msg.sources.map((src, i) => (
                               <span
                                 key={`${msg.id}-${src}-${i}`}
-                                className="text-xs bg-zinc-800 text-zinc-400 px-2 py-1 rounded"
+                                className="text-xs bg-surface-elevated text-text-muted px-2 py-1"
                               >
                                 [{i + 1}] {src}
                               </span>
@@ -289,10 +330,10 @@ export default function NodePage() {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="border-t border-zinc-900 p-4 space-y-3">
+          <div className="border-t border-surface-border p-4 space-y-3">
             <button
               onClick={() => setMobileSourcesOpen(!mobileSourcesOpen)}
-              className="md:hidden w-full h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg"
+              className="md:hidden w-full h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors"
             >
               <FileText size={14} />
               {mobileSourcesOpen ? "Hide sources" : `Sources (${sources.length})`}
@@ -313,12 +354,12 @@ export default function NodePage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask a question..."
                 disabled={streaming}
-                className="flex-1 h-12 bg-zinc-900 border border-zinc-800 px-5 text-sm outline-none focus:border-emerald-500 rounded-xl transition-colors disabled:opacity-50"
+                className="flex-1 h-12 bg-surface-card border border-surface-border px-5 text-sm outline-none focus:border-accent-brand transition-colors disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={streaming || !query.trim()}
-                className="w-12 h-12 bg-emerald-500 text-black flex items-center justify-center rounded-xl hover:bg-emerald-400 disabled:opacity-30 transition-colors shrink-0"
+                className="w-12 h-12 bg-accent-brand text-black flex items-center justify-center hover:bg-accent-brand/90 disabled:opacity-30 transition-colors shrink-0"
               >
                 {streaming ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
               </button>
@@ -326,28 +367,29 @@ export default function NodePage() {
           </div>
         </div>
 
-        <aside className="hidden md:flex w-80 shrink-0 border-l border-zinc-900 flex-col overflow-hidden">
-          <div className="p-4 border-b border-zinc-900 space-y-2">
+        <aside className="hidden md:flex w-80 shrink-0 border-l border-surface-border flex-col overflow-hidden">
+          <div className="p-4 border-b border-surface-border space-y-2">
             <div className="flex gap-2">
-              <label className="flex-1 h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg cursor-pointer">
+              <label className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors cursor-pointer">
                 <Plus size={14} />
                 File
                 <input type="file" onChange={handleFileUpload} className="hidden" accept=".pdf,.docx,.txt" />
               </label>
               <button
                 onClick={handleAddUrl}
-                className="flex-1 h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg"
+                className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors"
               >
                 <Plus size={14} />
                 URL
               </button>
             </div>
 
+            {sources.length > 0 && (
             <div className="flex gap-2">
               <button
                 onClick={() => handleSummary("study-guide")}
                 disabled={summaryLoading}
-                className="flex-1 h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg disabled:opacity-50"
+                className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors disabled:opacity-50"
               >
                 <BookOpen size={14} />
                 Study Guide
@@ -355,17 +397,18 @@ export default function NodePage() {
               <button
                 onClick={() => handleSummary("faq")}
                 disabled={summaryLoading}
-                className="flex-1 h-9 flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-xs transition-colors rounded-lg disabled:opacity-50"
+                className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors disabled:opacity-50"
               >
                 <HelpCircle size={14} />
                 FAQ
               </button>
             </div>
+            )}
           </div>
 
           {summary && (
-            <div className="p-4 border-b border-zinc-900 max-h-60 overflow-y-auto">
-              <p className="text-xs text-zinc-500 mb-2">Generated summary</p>
+            <div className="p-4 border-b border-surface-border max-h-60 overflow-y-auto">
+              <p className="text-xs text-text-muted mb-2">Generated summary</p>
               <div className="prose prose-invert prose-xs text-sm">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{summary}</ReactMarkdown>
               </div>
@@ -375,26 +418,26 @@ export default function NodePage() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <div className="px-3 pt-3 pb-1">
               <div className="relative">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600" />
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter sources..."
-                  className="w-full h-8 bg-zinc-900 border border-zinc-800 pl-7 pr-3 text-xs outline-none focus:border-emerald-500 rounded-lg transition-colors"
+                  className="w-full h-8 bg-surface-card border border-surface-border pl-7 pr-3 text-xs outline-none focus:border-accent-brand transition-colors"
                 />
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-3 pt-1 space-y-1">
-              <p className="text-xs text-zinc-600 px-2 pb-2 font-medium">
+              <p className="text-xs text-text-muted px-2 pb-2 font-medium">
                 SOURCES
                 {searchQuery && (
-                  <span className="text-zinc-700 font-normal">
+                  <span className="text-text-faint font-normal">
                     {" "}({filteredSources.length})
                   </span>
                 )}
               </p>
               {filteredSources.length === 0 && (
-                <p className="text-xs text-zinc-700 px-2">
+                <p className="text-xs text-text-faint px-2">
                   {searchQuery ? "No sources match your filter" : "No sources yet"}
                 </p>
               )}
@@ -404,22 +447,22 @@ export default function NodePage() {
                   <div
                     key={src.id}
                     onClick={() => handlePreviewSource(src)}
-                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer ${
-                      previewSourceId === src.id ? "bg-zinc-800" : "hover:bg-zinc-900"
+                    className={`group flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer ${
+                      previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
                     }`}
                   >
-                    <Icon size={14} className="text-zinc-500 shrink-0" />
-                    <span className="text-xs truncate flex-1 text-zinc-400">{src.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                    <Icon size={14} className="text-text-muted shrink-0" />
+                    <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 ${
                       src.status === "ready" ? "bg-emerald-900/50 text-emerald-400" :
                       src.status === "failed" ? "bg-red-900/50 text-red-400" :
-                      "bg-zinc-800 text-zinc-500"
+                      "bg-surface-elevated text-text-muted"
                     }`}>
                       {src.status}
                     </span>
                     <button
                       onClick={(e) => { e.stopPropagation(); setSourceToRemove(src.id); }}
-                      className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-red-400 transition-all shrink-0"
+                      className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-all shrink-0"
                     >
                       <X size={14} />
                     </button>
@@ -430,24 +473,25 @@ export default function NodePage() {
           </div>
         </aside>
       </div>
+      )}
 
       <Sheet
         open={!!previewSourceId}
         onOpenChange={(open) => { if (!open) setPreviewSourceId(null); }}
       >
-        <SheetContent className="bg-zinc-950 border-zinc-900 text-white w-[500px] sm:max-w-lg">
+        <SheetContent className="bg-surface-subtle border-surface-border text-white w-[500px] sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle className="text-sm text-zinc-300">
+            <SheetTitle className="text-sm text-text-outlined">
               {sources.find((s) => s.id === previewSourceId)?.name || "Source preview"}
             </SheetTitle>
           </SheetHeader>
           <ScrollArea className="h-[calc(100vh-8rem)] mt-4">
             {previewLoading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 size={20} className="animate-spin text-zinc-600" />
+                <Loader2 size={20} className="animate-spin text-text-muted" />
               </div>
             ) : (
-              <pre className="text-xs text-zinc-400 whitespace-pre-wrap font-mono leading-relaxed">
+              <pre className="text-xs text-text-muted whitespace-pre-wrap font-mono leading-relaxed">
                 {previewText}
               </pre>
             )}
@@ -459,15 +503,15 @@ export default function NodePage() {
         open={!!sourceToRemove}
         onOpenChange={(open) => { if (!open) setSourceToRemove(null); }}
       >
-        <DialogContent className="bg-zinc-950 border-zinc-900 text-white">
+        <DialogContent className="bg-surface-subtle border-surface-border text-white">
           <DialogHeader>
-            <DialogTitle className="text-sm text-zinc-300">Remove source?</DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500 mt-2">
+            <DialogTitle className="text-sm text-text-outlined">Remove source?</DialogTitle>
+            <DialogDescription className="text-xs text-text-muted mt-2">
               This will permanently delete the source and its chunks from the knowledge base.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
-            <DialogClose className="h-9 px-4 text-xs bg-zinc-900 hover:bg-zinc-800 transition-colors rounded-lg">
+            <DialogClose className="h-9 px-4 text-xs bg-surface-card hover:bg-surface-elevated transition-colors">
               Cancel
             </DialogClose>
             <button
@@ -475,7 +519,7 @@ export default function NodePage() {
                 if (sourceToRemove) handleRemoveSource(sourceToRemove);
                 setSourceToRemove(null);
               }}
-              className="h-9 px-4 text-xs bg-red-600 hover:bg-red-500 text-white transition-colors rounded-lg"
+              className="h-9 px-4 text-xs bg-red-600 hover:bg-red-500 text-white transition-colors"
             >
               Remove
             </button>

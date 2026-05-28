@@ -12,8 +12,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-black text-white">
-      <aside className="hidden lg:flex w-72 shrink-0 border-r border-zinc-900 flex-col">
-        <div className="h-14 px-4 flex items-center justify-between border-b border-zinc-900">
+      <aside className="hidden lg:flex w-80 shrink-0 border-r border-surface-border flex-col">
+        <div className="h-14 px-5 flex items-center justify-between border-b border-surface-border">
           <h1 className="text-sm font-bold tracking-tight">NODES</h1>
           <UserButton />
         </div>
@@ -22,14 +22,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-50 w-9 h-9 flex items-center justify-center bg-zinc-900 rounded-lg"
+        className="lg:hidden fixed top-3 left-3 z-50 w-9 h-9 flex items-center justify-center bg-surface-card"
       >
         <Menu size={16} />
       </button>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="bg-zinc-950 border-zinc-900 text-white w-72 p-0">
-          <div className="h-14 px-4 flex items-center justify-between border-b border-zinc-900">
+        <SheetContent side="left" className="bg-surface-subtle border-surface-border text-white w-80 p-0">
+          <div className="h-14 px-5 flex items-center justify-between border-b border-surface-border">
             <h1 className="text-sm font-bold tracking-tight">NODES</h1>
             <UserButton />
           </div>

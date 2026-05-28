@@ -1,18 +1,24 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { PT_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({ 
+const ptSerif = PT_Serif({
   subsets: ["latin"],
-  variable: "--font-space",
-  weight: ["400", "500", "600", "700"],
+  variable: "--font-pt-serif",
+  weight: ["400"],
 });
 
-const mono = IBM_Plex_Mono({ 
-  subsets: ["latin"], 
-  weight: ["400", "500"],
-  variable: "--font-mono",
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  variable: "--font-inter-tight",
+  weight: ["400", "500", "600"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "600"],
 });
 
 export const viewport: Viewport = {
@@ -22,7 +28,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Psynapse",
-  description: "Query your documents with AI",
+  description: "Query your documents with natural language",
 };
 
 export default function RootLayout({
@@ -33,7 +39,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${mono.variable} bg-black text-white antialiased`}>
+      <body className={`${ptSerif.variable} ${interTight.variable} ${jetbrainsMono.variable} bg-black text-white antialiased`}>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-500 focus:text-black focus:outline-none"

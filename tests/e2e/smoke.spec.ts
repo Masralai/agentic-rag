@@ -6,11 +6,10 @@ test("sign-in page loads", async ({ page }) => {
   await expect(page).toHaveTitle(/Psynapse/);
 });
 
-test("home page loads for unauthenticated users", async ({ page }) => {
+test("landing page shows for unauthenticated users", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("body")).toBeVisible();
-  const body = page.locator("body");
-  await expect(body).not.toBeEmpty();
+  await expect(page.getByText("Query your").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /get started/i }).first()).toBeVisible();
 });
 
 test("chat API rejects unauthenticated requests", async ({ request }) => {
