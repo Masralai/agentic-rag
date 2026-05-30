@@ -27,9 +27,7 @@ export async function chatToStream(
   const systemPrompt = buildChatPrompt(chunks || [], recentHistory);
   const stream = await generateStream(systemPrompt, query);
 
-  const sources = Array.from(
-    new Set((chunks || []).map((c: any) => c.documentName || c.source || "Unknown")),
-  );
+  const sources = (chunks || []).map((c: any) => c.documentName || c.source || "Unknown");
   let fullResponse = "";
 
   const reader = stream.getReader();

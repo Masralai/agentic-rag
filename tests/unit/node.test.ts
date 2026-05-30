@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Node, Source, ChatMessage, SourceInput } from "@/modules/node/types";
+import type { Node, Source, ChatMessage, SourceInput, ProcessingProgress } from "@/modules/node/types";
 
 describe("Node types", () => {
   it("validates node shape", () => {
@@ -49,5 +49,42 @@ describe("Node types", () => {
     };
     expect(input.type).toBe("web");
     expect(input.url).toBe("https://example.com");
+  });
+
+  it("validates ProcessingProgress shape", () => {
+    const progress: ProcessingProgress = {
+      current: 5,
+      total: 20,
+      phase: "OCR: page 5 of 20",
+    };
+    expect(progress.current).toBe(5);
+    expect(progress.total).toBe(20);
+    expect(progress.phase).toContain("OCR");
+  });
+
+  it("Source type includes progress field", () => {
+    const withProgress: Source = {
+      id: "s1",
+      nodeId: "nb1",
+      type: "pdf",
+      name: "scanned.pdf",
+      status: "processing",
+      metadata: {},
+      createdAt: new Date(),
+      progress: { current: 3, total: 10, phase: "OCR: page 3 of 10" },
+    };
+    expect(withProgress.progress?.current).toBe(3);
+    expect(withProgress.progress?.total).toBe(10);
+
+    const withoutProgress: Source = {
+      id: "s2",
+      nodeId: "nb1",
+      type: "pdf",
+      name: "text.pdf",
+      status: "ready",
+      metadata: {},
+      createdAt: new Date(),
+    };
+    expect(withoutProgress.progress).toBeUndefined();
   });
 });

@@ -18,6 +18,8 @@ describe("RAG prompts", () => {
       expect(prompt).toContain("[1]");
       expect(prompt).toContain("geography.txt");
       expect(prompt).toContain("Tell me about Paris");
+      expect(prompt).toContain("Do not use prior knowledge");
+      expect(prompt).toContain("Use the conversation history");
     });
 
     it("handles empty history", () => {
@@ -45,7 +47,8 @@ describe("RAG prompts", () => {
 
       expect(prompt).toContain("study guide");
       expect(prompt).toContain("Key concept X");
-      expect(prompt).toContain("doc1.md");
+      expect(prompt).toContain("[1] doc1.md");
+      expect(prompt).toContain("[2] doc2.md");
     });
 
     it("builds FAQ prompt", () => {
@@ -55,6 +58,11 @@ describe("RAG prompts", () => {
 
       expect(prompt).toContain("FAQ");
       expect(prompt).toContain("Q: What is RAG?");
+    });
+
+    it("handles empty sources gracefully", () => {
+      const prompt = buildSummaryPrompt([], "study-guide");
+      expect(prompt).toContain("No source material available");
     });
   });
 });

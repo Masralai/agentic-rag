@@ -5,6 +5,7 @@ import { PdfParser } from "@/modules/ingestion/parsers/pdf";
 import { isLMStudioAvailable } from "@/modules/llm/lmstudio";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 
 const apiKey = process.env.LANGBASE_API_KEY;
 const langbase = apiKey ? new Langbase({ apiKey }) : null;
@@ -84,4 +85,46 @@ describe.runIf(hasPdf)("PDF ingestion", () => {
     });
     expect(result.ok).toBe(true);
   }, 15000);
+
+  it("fires onProgress callback during OCR for minimal-text PDF", async () => {
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([100, 100]);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    page.drawText("ab", { x: 10, y: 50, size: 12, font });
+    const pdfBytes = await pdfDoc.save();
+
+    const progressCalls: { current: number; total: number; phase: string }[] = [];
+    await parser.parse({
+      nodeId: "test-node",
+      type: "pdf",
+      file: Buffer.from(pdfBytes),
+      fileName: "minimal.pdf",
+    }, {
+      onProgress: (current, total, phase) => {
+        progressCalls.push({ current, total, phase });
+      },
+    });
+
+    expect(progressCalls.length).toBeGreaterThan(0);
+    const last = progressCalls[progressCalls.length - 1];
+    expect(last.current).toBe(last.total);
+    expect(last.phase).toContain("OCR");
+  }, 60000);
+
+  it("does not fire onProgress for text-extractable PDF", async () => {
+    const buffer = readFileSync(pdfPath);
+    const progressCalls: any[] = [];
+    await parser.parse({
+      nodeId: "test-node",
+      type: "pdf",
+      file: buffer,
+      fileName: "QNA.pdf",
+    }, {
+      onProgress: (current, total, phase) => {
+        progressCalls.push({ current, total, phase });
+      },
+    });
+
+    expect(progressCalls.length).toBe(0);
+  });
 });
