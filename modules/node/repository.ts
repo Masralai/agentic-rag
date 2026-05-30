@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { nodes, sources, chatMessages } from "@/lib/db/schema";
-import { eq, and, like } from "drizzle-orm";
+import { eq, and, like, inArray } from "drizzle-orm";
 import type { Node, Source, ChatMessage, SourceInput } from "./types";
 
 function toSource(row: any): Source {
@@ -57,6 +57,15 @@ export class NodeRepo {
     return rows.map(toSource);
   }
 
+  async getSourcesByIds(ids: string[]): Promise<Source[]> {
+    if (ids.length === 0) return [];
+    const rows = await db
+      .select()
+      .from(sources)
+      .where(inArray(sources.id, ids));
+    return rows.map(toSource);
+  }
+
   async getSourceContent(id: string): Promise<string> {
     const [s] = await db
       .select({ rawText: sources.rawText })
@@ -67,7 +76,7 @@ export class NodeRepo {
 
   async updateSource(
     id: string,
-    data: { status?: string; rawText?: string; metadata?: Record<string, unknown> },
+    data: { status?: string; rawText?: string; metadata?: Record<string, unknown>; progress?: Record<string, unknown> | null },
   ): Promise<void> {
     await db
       .update(sources)
@@ -75,6 +84,7 @@ export class NodeRepo {
         ...(data.status ? { status: data.status as any } : {}),
         ...(data.rawText !== undefined ? { rawText: data.rawText } : {}),
         ...(data.metadata ? { metadata: data.metadata as any } : {}),
+        ...(data.progress !== undefined ? { progress: data.progress as any } : {}),
       })
       .where(eq(sources.id, id));
   }

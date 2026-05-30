@@ -20,6 +20,7 @@ export const sources = pgTable("sources", {
     .notNull(),
   metadata: jsonb("metadata").default({}).notNull(),
   rawText: text("raw_text"),
+  progress: jsonb("progress"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

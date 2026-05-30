@@ -12,10 +12,11 @@ export const nodeService = {
   deleteNode: (id: string) => repo.deleteNode(id),
 
   addSource: (input: SourceInput) => repo.addSource(input),
+  getSourcesByIds: (ids: string[]) => repo.getSourcesByIds(ids),
   removeSource: (id: string) => repo.removeSource(id),
   listSources: (nodeId: string) => repo.listSources(nodeId),
   getSourceContent: (id: string) => repo.getSourceContent(id),
-  updateSource: (id: string, data: { status?: string; rawText?: string; metadata?: Record<string, unknown> }) =>
+  updateSource: (id: string, data: { status?: string; rawText?: string; metadata?: Record<string, unknown>; progress?: Record<string, unknown> | null }) =>
     repo.updateSource(id, data),
   searchSources: (nodeId: string, query: string) => repo.searchSources(nodeId, query),
 

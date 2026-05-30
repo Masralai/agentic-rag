@@ -10,6 +10,12 @@ export interface Node {
   updatedAt: Date;
 }
 
+export interface ProcessingProgress {
+  current: number;
+  total: number;
+  phase: string;
+}
+
 export interface Source {
   id: string;
   nodeId: string;
@@ -18,6 +24,7 @@ export interface Source {
   status: SourceStatus;
   metadata: Record<string, unknown>;
   rawText?: string;
+  progress?: ProcessingProgress | null;
   createdAt: Date;
 }
 
