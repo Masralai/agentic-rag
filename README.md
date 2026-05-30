@@ -10,7 +10,7 @@
 
 ## Features
 
-- **Multi-format ingestion** — PDF, DOCX, TXT, web pages, and YouTube transcripts. Each format has a dedicated parser with paragraph-aware chunking.
+- **Multi-format ingestion** — PDF, DOCX, TXT, CSV, MD, HTML, XLSX, web pages, and YouTube transcripts. Each format has a dedicated parser with paragraph-aware chunking.
 - **Streaming chat** — Real-time SSE responses from Langbase Pipes (or local LM Studio) with markdown rendering and inline citation chips.
 - **Per-node knowledge bases** — Organize sources into named nodes. Each node has its own conversation history and vector index.
 - **Smart summaries** — Generate structured study guides or FAQ documents from all sources in a node with one click.
@@ -93,6 +93,7 @@ flowchart TD
 ## Getting Started
 
 > [!PREREQUISITES]
+>
 > - Node.js 20+
 > - npm
 > - A [Neon](https://neon.tech) PostgreSQL database (free tier works)
@@ -342,14 +343,17 @@ npm run test:watch
 ```
 
 **Unit test coverage:**
+
 - Node module — type/shape validation (4 tests)
 - Ingestion module — TXT parser (extraction, empty input, UTF-8) (4 tests)
 - RAG module — prompt builders (chat with/without history, empty chunks, study guide vs FAQ) (5 tests)
 
 **Integration test coverage:**
+
 - Langbase pipe and memory connection, PDF ingestion
 
 **E2E coverage:**
+
 - Sign-in page loads
 - Landing page renders for unauthenticated users
 - Chat API rejects unauthenticated requests (401)
