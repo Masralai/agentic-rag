@@ -13,7 +13,7 @@ export const sources = pgTable("sources", {
   nodeId: uuid("node_id")
     .references(() => nodes.id, { onDelete: "cascade" })
     .notNull(),
-  type: text("type", { enum: ["pdf", "docx", "txt", "web", "youtube"] }).notNull(),
+  type: text("type", { enum: ["pdf", "docx", "txt", "csv", "md", "html", "xlsx", "web", "youtube"] }).notNull(),
   name: text("name").notNull(),
   status: text("status", { enum: ["pending", "processing", "ready", "failed"] })
     .default("pending")
