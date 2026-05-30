@@ -33,7 +33,7 @@ export async function deleteNode(id: string) {
 
 export async function addSource(
   nodeId: string,
-  type: "pdf" | "docx" | "txt" | "web" | "youtube",
+  type: "pdf" | "docx" | "txt" | "csv" | "md" | "html" | "xlsx" | "web" | "youtube",
   formData: FormData,
 ) {
   await requireAuth();

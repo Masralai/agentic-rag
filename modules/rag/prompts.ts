@@ -1,4 +1,4 @@
-export function buildChatPrompt(chunks: any[], history: { role: string; content: string }[]): string {
+export function buildChatPrompt(chunks: { text: string; documentName?: string; source?: string }[], history: { role: string; content: string }[]): string {
   const chunksText = chunks
     .map(
       (chunk, i) =>

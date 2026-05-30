@@ -131,8 +131,10 @@ export default function NodePage() {
     if (!file) return;
 
     const ext = file.name.split(".").pop()?.toLowerCase();
-    const typeMap: Record<string, "pdf" | "docx" | "txt"> = {
+    const typeMap: Record<string, "pdf" | "docx" | "txt" | "csv" | "md" | "html" | "xlsx"> = {
       pdf: "pdf", docx: "docx", txt: "txt",
+      csv: "csv", md: "md", html: "html", htm: "html",
+      xlsx: "xlsx", xls: "xlsx",
     };
     const type = typeMap[ext || ""];
     if (!type) { alert("Unsupported file type"); return; }
@@ -262,7 +264,7 @@ export default function NodePage() {
             <label className="flex items-center justify-center gap-2 h-12 px-6 bg-surface-card hover:bg-surface-elevated text-sm transition-colors cursor-pointer border border-surface-border">
               <Plus size={16} />
               Upload file
-              <input type="file" onChange={onFileUpload} className="hidden" accept=".pdf,.docx,.txt" />
+              <input type="file" onChange={onFileUpload} className="hidden" accept=".pdf,.docx,.txt,.csv,.md,.html,.htm,.xlsx,.xls" />
             </label>
             <button
               onClick={onAddUrl}
@@ -373,7 +375,7 @@ export default function NodePage() {
               <label className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors cursor-pointer">
                 <Plus size={14} />
                 File
-                <input type="file" onChange={handleFileUpload} className="hidden" accept=".pdf,.docx,.txt" />
+                <input type="file" onChange={handleFileUpload} className="hidden" accept=".pdf,.docx,.txt,.csv,.md,.html,.htm,.xlsx,.xls" />
               </label>
               <button
                 onClick={handleAddUrl}

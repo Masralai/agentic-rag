@@ -22,22 +22,13 @@ export async function chatToStream(
     memory: [{ name: CONFIG.MEMORY_NAME }],
   });
 
-  if (!chunks || chunks.length === 0) {
-    return new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode(JSON.stringify({ type: "no-results" })));
-        controller.close();
-      },
-    });
-  }
-
   await nodeService.addMessage(nodeId, "user", query);
 
-  const systemPrompt = buildChatPrompt(chunks, recentHistory);
+  const systemPrompt = buildChatPrompt(chunks || [], recentHistory);
   const stream = await generateStream(systemPrompt, query);
 
   const sources = Array.from(
-    new Set(chunks.map((c: any) => c.documentName || c.source || "Unknown")),
+    new Set((chunks || []).map((c: any) => c.documentName || c.source || "Unknown")),
   );
   let fullResponse = "";
 

@@ -35,7 +35,7 @@ describe.runIf(!!apiKey)("Langbase integration", () => {
       document: Buffer.from("Integration test document content."),
     });
     expect(result.ok).toBe(true);
-  });
+  }, 15000);
 
   it("retrieves from memory", async () => {
     const chunks = await langbase!.memories.retrieve({
@@ -44,10 +44,12 @@ describe.runIf(!!apiKey)("Langbase integration", () => {
       memory: [{ name: CONFIG.MEMORY_NAME }],
     });
     expect(Array.isArray(chunks)).toBe(true);
-  });
+  }, 60000);
 
   it.skip("runs a simple pipe query (needs Langbase billing)", () => {});
 });
+
+
 
 describe.runIf(hasPdf)("PDF ingestion", () => {
   const parser = new PdfParser();
@@ -78,7 +80,7 @@ describe.runIf(hasPdf)("PDF ingestion", () => {
       memoryName: CONFIG.MEMORY_NAME,
       contentType: "text/plain",
       documentName: `qna-pdf-${Date.now()}.txt`,
-      document: Buffer.from(parsed.text.slice(0, 4000)),
+      document: Buffer.from(parsed.text),
     });
     expect(result.ok).toBe(true);
   }, 15000);

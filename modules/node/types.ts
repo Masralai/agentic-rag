@@ -1,4 +1,4 @@
-export type SourceType = "pdf" | "docx" | "txt" | "web" | "youtube";
+export type SourceType = "pdf" | "docx" | "txt" | "web" | "youtube" | "csv" | "md" | "html" | "xlsx";
 
 export type SourceStatus = "pending" | "processing" | "ready" | "failed";
 
