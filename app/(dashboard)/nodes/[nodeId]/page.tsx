@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { addSource, removeSource, listSources, listMessages, generateSummary, getSourceContent } from "../../actions";
-import { FileText, Send, Plus, X, Loader2, BookOpen, HelpCircle, File as FileIcon, Search } from "lucide-react";
+import { Send, Plus, Loader2, BookOpen, HelpCircle, FileText, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -22,15 +22,13 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SourceIcon } from "@/components/source-icon";
+import { SourceList, MobileSourcesPanel } from "@/components/source-list";
+import { UrlDialog } from "@/components/url-dialog";
+import { DropZone } from "@/components/drop-zone";
 import type { Source, ChatMessage } from "@/modules/node/types";
 
-const fileTypeIcons: Record<string, any> = {
-  pdf: FileText,
-  docx: FileText,
-  txt: FileText,
-  web: FileIcon,
-  youtube: FileIcon,
-};
+const POLL_INTERVAL = 2000;
 
 export default function NodePage() {
   const { nodeId } = useParams() as { nodeId: string };
@@ -40,6 +38,7 @@ export default function NodePage() {
   const [streaming, setStreaming] = useState(false);
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [addingUrl, setAddingUrl] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSourcesOpen, setMobileSourcesOpen] = useState(false);
   const [previewSourceId, setPreviewSourceId] = useState<string | null>(null);
@@ -59,6 +58,16 @@ export default function NodePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView(); }, [messages, streaming]);
+
+  const anyProcessing = sources.some(
+    (s) => s.status === "processing" || s.status === "pending"
+  );
+
+  useEffect(() => {
+    if (!anyProcessing) return;
+    const interval = setInterval(fetchData, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [anyProcessing, fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,34 +135,49 @@ export default function NodePage() {
     fetchData();
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    const typeMap: Record<string, "pdf" | "docx" | "txt" | "csv" | "md" | "html" | "xlsx"> = {
-      pdf: "pdf", docx: "docx", txt: "txt",
-      csv: "csv", md: "md", html: "html", htm: "html",
-      xlsx: "xlsx", xls: "xlsx",
-    };
-    const type = typeMap[ext || ""];
-    if (!type) { alert("Unsupported file type"); return; }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    await addSource(nodeId, type, formData);
+  const triggerProcess = async (sourceId: string) => {
+    try {
+      await fetch(`/api/sources/${sourceId}/process`, { method: "POST" });
+    } catch {
+      // polling will pick up the failed status
+    }
     fetchData();
   };
 
-  const handleAddUrl = async () => {
-    const url = prompt("Enter URL:");
-    if (!url) return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) await handleFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  const handleDropFiles = async (files: File[]) => {
+    await handleFiles(files);
+  };
+
+  const handleFiles = async (files: FileList | File[]) => {
+    for (const file of Array.from(files)) {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const typeMap: Record<string, "pdf" | "docx" | "txt" | "csv" | "md" | "html" | "xlsx"> = {
+        pdf: "pdf", docx: "docx", txt: "txt",
+        csv: "csv", md: "md", html: "html", htm: "html",
+        xlsx: "xlsx", xls: "xlsx",
+      };
+      const type = typeMap[ext || ""];
+      if (!type) continue;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      const { sourceId } = await addSource(nodeId, type, formData);
+      triggerProcess(sourceId);
+    }
+  };
+
+  const handleAddUrl = async (url: string) => {
     const type = url.includes("youtube.com") || url.includes("youtu.be") ? "youtube" as const : "web" as const;
     const formData = new FormData();
     formData.append("url", url);
     formData.append("name", url);
-    await addSource(nodeId, type, formData);
-    fetchData();
+    const { sourceId } = await addSource(nodeId, type, formData);
+    triggerProcess(sourceId);
   };
 
   const handleSummary = async (type: "study-guide" | "faq") => {
@@ -197,93 +221,10 @@ export default function NodePage() {
     );
   }
 
-  function MobileSourcesPanel({
-    sources,
-    previewSourceId,
-    onPreview,
-    onRemove,
-  }: {
-    sources: Source[];
-    previewSourceId: string | null;
-    onPreview: (s: Source) => void;
-    onRemove: (id: string) => void;
-  }) {
-    return (
-      <div className="max-h-48 overflow-y-auto border border-surface-border p-2 space-y-1">
-        {sources.length === 0 && (
-          <p className="text-xs text-text-faint px-2 py-4 text-center">No sources yet</p>
-        )}
-        {sources.map((src) => {
-          const Icon = fileTypeIcons[src.type] || FileText;
-          return (
-            <div
-              key={src.id}
-              onClick={() => onPreview(src)}
-              className={`group flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer ${
-                previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
-              }`}
-            >
-              <Icon size={14} className="text-text-muted shrink-0" />
-              <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 ${
-                src.status === "ready" ? "bg-emerald-900/50 text-emerald-400" :
-                src.status === "failed" ? "bg-red-900/50 text-red-400" :
-                "bg-surface-elevated text-text-muted"
-              }`}>
-                {src.status}
-              </span>
-              <button onClick={(e) => { e.stopPropagation(); onRemove(src.id); }} className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-all shrink-0">
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  function EmptyStateView({
-    onFileUpload,
-    onAddUrl,
-  }: {
-    onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    onAddUrl: () => void;
-  }) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center max-w-lg mx-auto">
-          <div className="w-16 h-16 mx-auto mb-6 bg-surface-card flex items-center justify-center">
-            <FileText size={28} className="text-text-muted" />
-          </div>
-          <h2 className="text-xl font-bold text-text-outlined mb-2">Add sources to get started</h2>
-          <p className="text-sm text-text-muted mb-8 leading-relaxed">
-            Upload documents, add web pages, or paste YouTube links to build your knowledge base.
-            Once your sources are ready, you can ask questions and generate summaries.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <label className="flex items-center justify-center gap-2 h-12 px-6 bg-surface-card hover:bg-surface-elevated text-sm transition-colors cursor-pointer border border-surface-border">
-              <Plus size={16} />
-              Upload file
-              <input type="file" onChange={onFileUpload} className="hidden" accept=".pdf,.docx,.txt,.csv,.md,.html,.htm,.xlsx,.xls" />
-            </label>
-            <button
-              onClick={onAddUrl}
-              className="flex items-center justify-center gap-2 h-12 px-6 bg-surface-card hover:bg-surface-elevated text-sm transition-colors border border-surface-border"
-            >
-              <Plus size={16} />
-              Add URL
-            </button>
-          </div>
-          <p className="text-xs text-text-faint mt-6">Supports PDF, DOCX, TXT, web pages, and YouTube</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
       {sources.length === 0 && messages.length === 0 ? (
-        <EmptyStateView onFileUpload={handleFileUpload} onAddUrl={handleAddUrl} />
+        <DropZone onFiles={handleDropFiles} />
       ) : (
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
@@ -345,6 +286,8 @@ export default function NodePage() {
               <MobileSourcesPanel
                 sources={filteredSources}
                 previewSourceId={previewSourceId}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
                 onPreview={handlePreviewSource}
                 onRemove={(id) => setSourceToRemove(id)}
               />
@@ -356,7 +299,7 @@ export default function NodePage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask a question..."
                 disabled={streaming}
-                className="flex-1 h-12 bg-surface-card border border-surface-border px-5 text-sm outline-none focus:border-accent-brand transition-colors disabled:opacity-50"
+                className="flex-1 h-12 bg-surface-card border border-surface-border px-5 text-sm outline-none focus:border-accent-brand transition-colors disabled:opacity-50 text-text-outlined"
               />
               <button
                 type="submit"
@@ -378,7 +321,7 @@ export default function NodePage() {
                 <input type="file" onChange={handleFileUpload} className="hidden" accept=".pdf,.docx,.txt,.csv,.md,.html,.htm,.xlsx,.xls" />
               </label>
               <button
-                onClick={handleAddUrl}
+                onClick={() => setAddingUrl(true)}
                 className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors"
               >
                 <Plus size={14} />
@@ -417,62 +360,14 @@ export default function NodePage() {
             </div>
           )}
 
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-3 pt-3 pb-1">
-              <div className="relative">
-                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter sources..."
-                  className="w-full h-8 bg-surface-card border border-surface-border pl-7 pr-3 text-xs outline-none focus:border-accent-brand transition-colors"
-                />
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 pt-1 space-y-1">
-              <p className="text-xs text-text-muted px-2 pb-2 font-medium">
-                SOURCES
-                {searchQuery && (
-                  <span className="text-text-faint font-normal">
-                    {" "}({filteredSources.length})
-                  </span>
-                )}
-              </p>
-              {filteredSources.length === 0 && (
-                <p className="text-xs text-text-faint px-2">
-                  {searchQuery ? "No sources match your filter" : "No sources yet"}
-                </p>
-              )}
-              {filteredSources.map((src) => {
-                const Icon = fileTypeIcons[src.type] || FileText;
-                return (
-                  <div
-                    key={src.id}
-                    onClick={() => handlePreviewSource(src)}
-                    className={`group flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer ${
-                      previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
-                    }`}
-                  >
-                    <Icon size={14} className="text-text-muted shrink-0" />
-                    <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 ${
-                      src.status === "ready" ? "bg-emerald-900/50 text-emerald-400" :
-                      src.status === "failed" ? "bg-red-900/50 text-red-400" :
-                      "bg-surface-elevated text-text-muted"
-                    }`}>
-                      {src.status}
-                    </span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSourceToRemove(src.id); }}
-                      className="opacity-0 group-hover:opacity-100 text-text-muted hover:text-red-400 transition-all shrink-0"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <SourceList
+            sources={filteredSources}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            previewSourceId={previewSourceId}
+            onPreview={handlePreviewSource}
+            onRemove={(id) => setSourceToRemove(id)}
+          />
         </aside>
       </div>
       )}
@@ -513,7 +408,7 @@ export default function NodePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2 mt-4">
-            <DialogClose className="h-9 px-4 text-xs bg-surface-card hover:bg-surface-elevated transition-colors">
+            <DialogClose className="h-9 px-4 text-xs bg-surface-card hover:bg-surface-elevated transition-colors text-text-muted">
               Cancel
             </DialogClose>
             <button
@@ -528,6 +423,12 @@ export default function NodePage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <UrlDialog
+        open={addingUrl}
+        onOpenChange={setAddingUrl}
+        onConfirm={handleAddUrl}
+      />
     </>
   );
 }

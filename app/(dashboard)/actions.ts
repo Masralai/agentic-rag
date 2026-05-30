@@ -2,9 +2,10 @@
 
 import { requireAuth } from "@/modules/auth";
 import { nodeService } from "@/modules/node";
-import { ingest } from "@/modules/ingestion";
+import { processSource } from "@/modules/ingestion";
 import { summarize, type SummaryType } from "@/modules/rag";
 import { revalidatePath } from "next/cache";
+import { mkdir, writeFile } from "fs/promises";
 
 export async function createNode(name: string) {
   const { userId } = await requireAuth();
@@ -40,17 +41,23 @@ export async function addSource(
 
   const file = formData.get("file") as File | null;
   const url = formData.get("url") as string | null;
+  const name = formData.get("name") as string | null;
 
-  await ingest({
+  const source = await nodeService.addSource({
     nodeId,
     type,
-    file: file ? Buffer.from(await file.arrayBuffer()) : undefined,
-    fileName: file?.name,
-    url: url || undefined,
-    name: file?.name || url || undefined,
-  });
+    name: name || file?.name || url || "unknown",
+    status: "pending",
+  } as any);
+
+  if (file) {
+    const dir = `/tmp/psynapse/${source.id}`;
+    await mkdir(dir, { recursive: true });
+    await writeFile(`${dir}/${file.name}`, Buffer.from(await file.arrayBuffer()));
+  }
 
   revalidatePath(`/nodes/${nodeId}`);
+  return { sourceId: source.id };
 }
 
 export async function removeSource(sourceId: string, nodeId: string) {
