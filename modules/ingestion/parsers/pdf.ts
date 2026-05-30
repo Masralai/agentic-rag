@@ -1,26 +1,26 @@
-import type { SourceParser, ParsedContent, SourceInput } from "../types";
+import type { SourceParser, ParsedContent, SourceInput, ParseOptions } from "../types";
 import { PDFParse } from "pdf-parse";
 import { createCanvas } from "canvas";
 import { createWorker } from "tesseract.js";
 
 export class PdfParser implements SourceParser {
-  async parse(input: SourceInput): Promise<ParsedContent> {
+  async parse(input: SourceInput, options?: ParseOptions): Promise<ParsedContent> {
     if (!input.file) throw new Error("PDF parser requires a file buffer");
 
     const textResult = await this.extractText(input.file);
-    const pages = textResult.total || 0;
 
     if (textResult.text.trim().length > 20) {
       return {
         text: textResult.text,
-        metadata: { parser: "pdf", fileName: input.fileName, pages },
+        metadata: { parser: "pdf", fileName: input.fileName, pages: textResult.total || 0 },
       };
     }
 
-    const ocrText = await this.ocrPages(input.file);
+    options?.onProgress?.(0, textResult.total || 0, "Starting OCR...");
+    const ocrText = await this.ocrPages(input.file, options?.onProgress);
     return {
       text: ocrText,
-      metadata: { parser: "pdf-ocr", fileName: input.fileName, pages },
+      metadata: { parser: "pdf-ocr", fileName: input.fileName, pages: textResult.total || 0 },
     };
   }
 
@@ -37,7 +37,7 @@ export class PdfParser implements SourceParser {
     }
   }
 
-  private async ocrPages(buffer: Buffer): Promise<string> {
+  private async ocrPages(buffer: Buffer, onProgress?: (current: number, total: number, phase: string) => void): Promise<string> {
     const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs") as any;
     const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer) }).promise;
     const total = pdf.numPages;
@@ -57,9 +57,8 @@ export class PdfParser implements SourceParser {
         const text = (data.text || "").trim();
         results.push(text ? `--- Page ${i} ---\n${text}` : `--- Page ${i} ---\n[No text detected]`);
 
-        process.stdout.write(`\r   OCR page ${i}/${total}`);
+        onProgress?.(i, total, `OCR: page ${i} of ${total}`);
       }
-      console.log("");
     } finally {
       await worker.terminate();
     }
