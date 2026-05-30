@@ -1,6 +1,5 @@
 export const CONFIG = {
-  MEMORY_NAME: "knowledge-base-v2",
+  MEMORY_NAME: "knowledge-base-v5",
   PIPE_NAME: "support-agent-gem",
-  EMBEDDING_MODEL: "google:text-embedding-004",
-  LLM_MODEL: "google:gemini-2.0-flash",
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL || "openrouter/free",
 };

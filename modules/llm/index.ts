@@ -1,38 +1,35 @@
 import { langbase, fromReadableStream } from "@/lib/langbase";
 import { CONFIG } from "@/lib/config";
 import { isLMStudioAvailable, generate as lmGenerate, generateStream as lmGenerateStream } from "./lmstudio";
+import { isOpenRouterConfigured, generate as orGenerate, generateStream as orGenerateStream } from "./openrouter";
 
-let useLM = false;
-let checked = false;
+type Provider = "lmstudio" | "openrouter" | "langbase";
 
-async function detect(): Promise<boolean> {
-  if (!checked) {
-    useLM = await isLMStudioAvailable();
-    checked = true;
-  }
-  return useLM;
+let provider: Provider | null = null;
+
+async function detect(): Promise<Provider> {
+  if (provider) return provider;
+  if (await isLMStudioAvailable()) provider = "lmstudio";
+  else if (isOpenRouterConfigured()) provider = "openrouter";
+  else provider = "langbase";
+  return provider;
 }
 
-async function ensureDetected(): Promise<"lmstudio" | "langbase"> {
-  return (await detect()) ? "lmstudio" : "langbase";
+function buildMessages(systemPrompt: string, userContent?: string) {
+  return userContent
+    ? [{ role: "system" as const, content: systemPrompt }, { role: "user" as const, content: userContent }]
+    : [{ role: "system" as const, content: systemPrompt }];
 }
 
 export async function generate(
   systemPrompt: string,
   userContent?: string,
 ): Promise<string> {
-  const provider = await ensureDetected();
+  const p = await detect();
+  const messages = buildMessages(systemPrompt, userContent);
 
-  if (provider === "lmstudio") {
-    const messages = userContent
-      ? [{ role: "system" as const, content: systemPrompt }, { role: "user" as const, content: userContent }]
-      : [{ role: "system" as const, content: systemPrompt }];
-    return lmGenerate(messages);
-  }
-
-  const messages: { role: "system" | "user"; content: string }[] = userContent
-    ? [{ role: "system", content: systemPrompt }, { role: "user", content: userContent }]
-    : [{ role: "system", content: systemPrompt }];
+  if (p === "lmstudio") return lmGenerate(messages);
+  if (p === "openrouter") return orGenerate(messages);
 
   const { completion } = await langbase.pipes.run({
     stream: false,
@@ -46,19 +43,12 @@ export async function generateStream(
   systemPrompt: string,
   userContent: string,
 ): Promise<ReadableStream> {
-  const provider = await ensureDetected();
+  const p = await detect();
+  const messages = buildMessages(systemPrompt, userContent) as { role: "system" | "user"; content: string }[];
 
-  if (provider === "lmstudio") {
-    return lmGenerateStream([
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userContent },
-    ]);
-  }
+  if (p === "lmstudio") return lmGenerateStream(messages);
+  if (p === "openrouter") return orGenerateStream(messages);
 
-  const messages: { role: "system" | "user"; content: string }[] = [
-    { role: "system", content: systemPrompt },
-    { role: "user", content: userContent },
-  ];
   const response = await langbase.pipes.run({
     stream: true,
     name: CONFIG.PIPE_NAME,

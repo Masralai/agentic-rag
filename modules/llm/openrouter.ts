@@ -1,25 +1,29 @@
-const LM_STUDIO_BASE = process.env.LM_STUDIO_URL || "http://localhost:1234";
+import { CONFIG } from "@/lib/config";
 
-export async function isLMStudioAvailable(): Promise<boolean> {
-  try {
-    const res = await fetch(`${LM_STUDIO_BASE}/v1/models`, {
-      signal: AbortSignal.timeout(2000),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
+const BASE_URL = "https://openrouter.ai/api/v1";
+const API_KEY = process.env.OPENROUTER_API_KEY;
+
+export function isOpenRouterConfigured(): boolean {
+  return !!API_KEY;
 }
 
 export async function generate(
   messages: { role: string; content: string }[],
 ): Promise<string> {
-  const res = await fetch(`${LM_STUDIO_BASE}/v1/chat/completions`, {
+  const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, stream: false, max_tokens: 4096 }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      messages,
+      model: CONFIG.OPENROUTER_MODEL,
+      stream: false,
+      max_tokens: 4096,
+    }),
   });
-  if (!res.ok) throw new Error(`LM Studio: ${res.status} ${await res.text()}`);
+  if (!res.ok) throw new Error(`OpenRouter: ${res.status} ${await res.text()}`);
   const json = await res.json();
   return json.choices?.[0]?.message?.content || "";
 }
@@ -33,13 +37,21 @@ export function generateStream(
   return new ReadableStream({
     async start(controller) {
       try {
-        const res = await fetch(`${LM_STUDIO_BASE}/v1/chat/completions`, {
+        const res = await fetch(`${BASE_URL}/chat/completions`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages, stream: true, max_tokens: 4096 }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            messages,
+            model: CONFIG.OPENROUTER_MODEL,
+            stream: true,
+            max_tokens: 4096,
+          }),
         });
-        if (!res.ok) throw new Error(`LM Studio: ${res.status} ${await res.text()}`);
-        if (!res.body) throw new Error("LM Studio: no response body");
+        if (!res.ok) throw new Error(`OpenRouter: ${res.status} ${await res.text()}`);
+        if (!res.body) throw new Error("OpenRouter: no response body");
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -70,7 +82,7 @@ export function generateStream(
       } catch (error) {
         if (!cancelled) {
           controller.enqueue(
-            encoder.encode(JSON.stringify({ type: "error", message: "LM Studio stream failed" })),
+            encoder.encode(JSON.stringify({ type: "error", message: "OpenRouter stream failed" })),
           );
           controller.close();
         }
