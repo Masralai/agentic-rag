@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, jsonb, integer, vector, index } from "drizzle-orm/pg-core";
 
 export const nodes = pgTable("nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -34,3 +34,24 @@ export const chatMessages = pgTable("chat_messages", {
   sources: text("sources").array().default([]).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const chunks = pgTable(
+  "chunks",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sourceId: uuid("source_id")
+      .references(() => sources.id, { onDelete: "cascade" })
+      .notNull(),
+    nodeId: uuid("node_id")
+      .references(() => nodes.id, { onDelete: "cascade" })
+      .notNull(),
+    index: integer("index").notNull(),
+    content: text("content").notNull(),
+    embedding: vector("embedding", { dimensions: 384 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    sourceIdx: index("idx_chunks_source").on(table.sourceId),
+    nodeIdx: index("idx_chunks_node").on(table.nodeId),
+  }),
+);
