@@ -10,8 +10,8 @@ import { XlsxParser } from "./parsers/xlsx";
 import { WebParser } from "./parsers/web";
 import { YouTubeParser } from "./parsers/youtube";
 import { nodeService } from "@/modules/node";
-import { langbase } from "@/lib/langbase";
-import { CONFIG } from "@/lib/config";
+import { embedBatch } from "@/modules/llm/embed";
+import { chunkText } from "./chunk";
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
@@ -73,12 +73,17 @@ export async function ingest(input: SourceInput): Promise<Source> {
 
     const parsed: ParsedContent = await parser.parse(input);
 
-    await langbase.memories.documents.upload({
-      memoryName: CONFIG.MEMORY_NAME,
-      contentType: "text/plain",
-      documentName: `${input.name ? input.name.replace(/\.[^/.]+$/, "") : "source"}-${Date.now()}.txt`,
-      document: Buffer.from(parsed.text),
-    });
+    const textChunks = chunkText(parsed.text);
+    const embeddings = await embedBatch(textChunks);
+    await nodeService.addChunks(
+      sourceRecord.id,
+      sourceRecord.nodeId,
+      textChunks.map((content, i) => ({
+        index: i,
+        content,
+        embedding: embeddings[i],
+      })),
+    );
 
     await nodeService.updateSource(sourceRecord.id, {
       status: "ready",
@@ -129,15 +134,20 @@ export async function processSource(sourceId: string): Promise<void> {
     });
 
     await nodeService.updateSource(sourceId, {
-      progress: { current: 1, total: 1, phase: "Uploading to memory..." } as any,
+      progress: { current: 1, total: 1, phase: "Indexing chunks..." } as any,
     });
 
-    await langbase.memories.documents.upload({
-      memoryName: CONFIG.MEMORY_NAME,
-      contentType: "text/plain",
-      documentName: `${source.name.replace(/\.[^/.]+$/, "")}-${Date.now()}.txt`,
-      document: Buffer.from(parsed.text),
-    });
+    const textChunks = chunkText(parsed.text);
+    const embeddings = textChunks.length > 0 ? await embedBatch(textChunks).catch(() => []) : [];
+    await nodeService.addChunks(
+      sourceId,
+      source.nodeId,
+      textChunks.map((content, i) => ({
+        index: i,
+        content,
+        embedding: embeddings[i] || undefined,
+      })),
+    );
 
     await nodeService.updateSource(sourceId, {
       status: "ready",

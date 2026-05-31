@@ -1,10 +1,9 @@
-export function buildChatPrompt(chunks: { text: string; documentName?: string; source?: string }[], history: { role: string; content: string }[]): string {
+export function buildChatPrompt(chunks: { text: string; documentName?: string }[], history: { role: string; content: string }[]): string {
   const chunksText = chunks
-    .map(
-      (chunk, i) =>
-        `[${i + 1}] ${chunk.text}\nSource: ${chunk.documentName || chunk.source || "Unknown"}`,
+    .map((chunk, i) =>
+      `[Context ${i + 1}]\n${chunk.text}\nSource: ${chunk.documentName || "Unknown"}`
     )
-    .join("\n---\n");
+    .join("\n\n");
 
   const historyText = history
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
@@ -13,7 +12,6 @@ export function buildChatPrompt(chunks: { text: string; documentName?: string; s
   return `
 You are a helpful AI assistant. Answer questions based ONLY on the provided context below.
 Use the conversation history for context on follow-up questions.
-Cite sources in brackets like [1]. At the end, list each source with its number and document name.
 If the context doesn't contain the answer, say you don't know. Do not use prior knowledge.
 
 ${history.length > 0 ? `Conversation so far:\n${historyText}\n` : ""}
@@ -39,7 +37,6 @@ export function buildSummaryPrompt(sources: { name: string; text: string }[], ty
   return `
 ${instructions}
 Base everything on the provided source material.
-Cite sources in brackets like [1] where applicable.
 Be comprehensive but concise. Provide specific details and examples from the sources.
 
 Sources:

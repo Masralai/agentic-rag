@@ -35,6 +35,17 @@ export interface SourceInput {
   url?: string;
 }
 
+export interface Chunk {
+  id: string;
+  sourceId: string;
+  nodeId: string;
+  index: number;
+  content: string;
+  embedding?: number[];
+  sourceName?: string;
+  createdAt: Date;
+}
+
 export interface ChatMessage {
   id: string;
   nodeId: string;

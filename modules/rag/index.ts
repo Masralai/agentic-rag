@@ -1,8 +1,7 @@
 import type { Summary, SummaryType } from "./types";
 import { buildChatPrompt, buildSummaryPrompt } from "./prompts";
 import { nodeService } from "@/modules/node";
-import { langbase } from "@/lib/langbase";
-import { CONFIG } from "@/lib/config";
+import { embed } from "@/modules/llm/embed";
 import { generate, generateStream } from "@/modules/llm";
 
 export type { Summary, SummaryType } from "./types";
@@ -16,18 +15,28 @@ export async function chatToStream(
   const history = await nodeService.listMessages(nodeId);
   const recentHistory = history.slice(-10);
 
-  const chunks = await langbase.memories.retrieve({
-    query,
-    topK: 4,
-    memory: [{ name: CONFIG.MEMORY_NAME }],
-  });
+  let chunks: { text: string; documentName?: string }[] = [];
+  const sourceIds: string[] = [];
+  try {
+    const queryEmbedding = await embed(query);
+    if (queryEmbedding.length > 0) {
+      const results = await nodeService.searchChunks(nodeId, queryEmbedding, 4);
+      chunks = results.map((c) => {
+        if (c.sourceId && !sourceIds.includes(c.sourceId)) {
+          sourceIds.push(c.sourceId);
+        }
+        return { text: c.content, documentName: c.sourceName || "" };
+      });
+    }
+  } catch (error) {
+    console.error("Vector search failed, continuing without context:", error);
+  }
 
   await nodeService.addMessage(nodeId, "user", query);
 
-  const systemPrompt = buildChatPrompt(chunks || [], recentHistory);
+  const systemPrompt = buildChatPrompt(chunks, recentHistory);
   const stream = await generateStream(systemPrompt, query);
 
-  const sources = (chunks || []).map((c: any) => c.documentName || c.source || "Unknown");
   let fullResponse = "";
 
   const reader = stream.getReader();
@@ -45,7 +54,7 @@ export async function chatToStream(
             controller.enqueue(encoder.encode(text));
           }
         }
-        await nodeService.addMessage(nodeId, "assistant", fullResponse, sources);
+        await nodeService.addMessage(nodeId, "assistant", fullResponse, sourceIds);
         controller.close();
       } catch (error) {
         console.error("RAG stream error:", error);
