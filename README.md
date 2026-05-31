@@ -4,7 +4,7 @@
 [![Next.js](https://img.shields.io/badge/next.js-16-black?logo=next.js)](https://nextjs.org)
 [![Docker](https://img.shields.io/badge/docker-multi--stage-2496ED?logo=docker)](https://docker.com)
 
-> AI-powered node-based platform for document Q&A, summarization, and knowledge management. Upload PDFs, scrape web pages, fetch YouTube transcripts — then ask questions in natural language and get streaming answers with source citations.
+> LLM-powered node-based platform for document Q&A, summarization, and knowledge management. Upload PDFs, scrape web pages, fetch YouTube transcripts — then ask questions in natural language and get streaming answers with source citations.
 
 ---
 

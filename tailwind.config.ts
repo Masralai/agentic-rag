@@ -45,12 +45,15 @@ const config: Config = {
 
         /* DESIGN.md Accents (emerald replacing lime) */
         "accent-brand": "#10b981",
+        "accent-glow": "rgba(16, 185, 129, 0.2)",
+        "accent-muted": "rgba(16, 185, 129, 0.1)",
       },
       fontFamily: {
-        sans: ["var(--font-inter-tight)", "Inter", "system-ui", "sans-serif"],
+        sans: ["var(--font-geist-sans)", "Geist", "system-ui", "sans-serif"],
         serif: ["var(--font-pt-serif)", "Source Serif 4", "serif"],
-        mono: ["var(--font-jetbrains-mono)", "Fira Code", "monospace"],
+        mono: ["var(--font-geist-mono)", "Geist Mono", "monospace"],
         "ui-mono": ["ui-monospace", "SF Mono", "monospace"],
+        jetbrains: ["var(--font-jetbrains-mono)", "Fira Code", "monospace"],
       },
       fontSize: {
         body: ["14px", { lineHeight: "1.55", letterSpacing: "0.03px" }],
@@ -67,14 +70,19 @@ const config: Config = {
         "18": "18px",
         "22": "22px",
         "30": "30px",
+        "44": "44px",
       },
       boxShadow: {
         sm: "rgba(16, 185, 129, 0.45) 0px 0px 8px 0px",
+        md: "rgba(0, 0, 0, 0.3) 0px 4px 12px 0px",
+        lg: "rgba(0, 0, 0, 0.4) 0px 8px 24px 0px",
       },
       animation: {
         "fade-in": "fadeIn 300ms ease-out",
         "slide-up": "slideUp 300ms ease-out",
         "scale-in": "scaleIn 200ms ease-out",
+        "breathe": "breathe 4s ease-in-out infinite",
+        "scanline": "scanline 8s linear infinite",
       },
       keyframes: {
         fadeIn: {

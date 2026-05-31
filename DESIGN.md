@@ -9,12 +9,12 @@
 |------|-------|-------|------|
 | Midnight Ink | `#000000` | `--color-midnight-ink` | Primary background, core surface color, primary text for bright surfaces |
 | Silver Whisper | `#ffffff` | `--color-silver-whisper` | Primary text on dark backgrounds, icon fills, subtle borders |
-| Lime Interface | `linear-gradient(90deg, rgb(197, 255, 74) 0px, rgb(197, 255, 74) 6px, rgba(0, 0, 0, 0) 6px, rgba(0, 0, 0, 0) 12px)` | `--color-lime-interface` | Primary action background, active states, brand accent for highlights, iconography, and key data points. Creates high visibility on dark backgrounds; Shadow effect for the primary brand color, creating a subtle neon glow; Decorative background gradient used for subtle texture; Large, soft radial gradient for background atmospheric effects |
+| Emerald Brand | `#10b981` | `--color-emerald-brand` | Primary action background, active states, brand accent for highlights, iconography, and key data points. Creates high visibility on dark backgrounds. |
 | Dark Grid | `#252525` | `--color-dark-grid` | Subtle surface accents, outlined button borders, navigation separators |
 | Mid-Gray Border | `#7a7a7a` | `--color-mid-gray-border` | Muted text, secondary borders, visual separation elements |
 | Faint Grid | `#3d3d3d` | `--color-faint-grid` | Lightest grey text, and very subtle border lines |
-| Glow Green | `#597321` | `--color-glow-green` | Green outline accent for tags, dividers, and focused UI edges. Do not promote it to the primary CTA color |
-| Soft Lime | `#314013` | `--color-soft-lime` | Deep background accents, decorative strokes when very subtle shading is needed |
+| Glow Green | `#065f46` | `--color-glow-green` | Green outline accent for tags, dividers, and focused UI edges. Do not promote it to the primary CTA color |
+| Soft Emerald | `#022c22` | `--color-soft-emerald` | Deep background accents, decorative strokes when very subtle shading is needed |
 | White Outlined Text | `#c5c5c5` | `--color-white-outlined-text` | Faint text on dark backgrounds, secondary data labels |
 
 ## Tokens — Typography
@@ -27,13 +27,13 @@
 - **Letter spacing:** -0.035em at 130px, -0.03em at 89px, -0.025em at 78px, -0.022em at 75px, -0.02em at 72px, -0.015em at 60px, -0.012em at 56px, -0.01em at 49px
 - **Role:** Headings and prominent display text. The wide range of sizes and tight tracking at larger sizes give a confident, expansive feel. The serif communicates authority and an academic tone.
 
-### Inter Tight — Body text, navigation, and general UI elements. The tight tracking and strong weights ensure clarity even at small sizes, maintaining a compact yet readable information density. · `--font-inter-tight`
-- **Substitute:** Inter
+### Geist — Body text, navigation, and general UI elements. Clean, technical sans-serif optimized for dark UIs. Maintains clarity at small sizes. · `--font-geist-sans`
+- **Substitute:** Inter Tight
 - **Weights:** 400, 500, 600
 - **Sizes:** 9px, 10px, 11px, 12px, 13px, 14px, 16px, 20px, 28px
 - **Line height:** 1.08, 1.20, 1.30, 1.50, 1.55, 1.60, 1.70, 1.75, 1.90
 - **Letter spacing:** 0.005em at 28px, 0.01em at 20px, 0.02em at 16px, 0.03em at 14px, 0.04em at 13px, 0.08em at 12px, 0.11em at 11px, 0.12em at 10px, 0.16em at 9px
-- **Role:** Body text, navigation, and general UI elements. The tight tracking and strong weights ensure clarity even at small sizes, maintaining a compact yet readable information density.
+- **Role:** Body text, navigation, and general UI elements. Clean, technical sans-serif optimized for dark UIs.
 
 ### ui-monospace — Small functional text, legal disclaimers, minor footnotes. The monospace style conveys stability and precision for utility text. · `--font-ui-monospace`
 - **Substitute:** SF Mono
@@ -65,24 +65,17 @@
 
 **Density:** comfortable
 
-### Spacing Scale
+### Spacing Scale (8pt Grid)
 
 | Name | Value | Token |
 |------|-------|-------|
 | 4 | 4px | `--spacing-4` |
-| 6 | 6px | `--spacing-6` |
-| 7 | 7px | `--spacing-7` |
 | 8 | 8px | `--spacing-8` |
-| 10 | 10px | `--spacing-10` |
 | 12 | 12px | `--spacing-12` |
-| 14 | 14px | `--spacing-14` |
 | 16 | 16px | `--spacing-16` |
-| 18 | 18px | `--spacing-18` |
 | 20 | 20px | `--spacing-20` |
-| 22 | 22px | `--spacing-22` |
 | 24 | 24px | `--spacing-24` |
 | 28 | 28px | `--spacing-28` |
-| 30 | 30px | `--spacing-30` |
 | 32 | 32px | `--spacing-32` |
 | 44 | 44px | `--spacing-44` |
 
@@ -96,13 +89,15 @@
 
 | Name | Value | Token |
 |------|-------|-------|
-| sm | `rgba(197, 255, 74, 0.45) 0px 0px 8px 0px` | `--shadow-sm` |
+| sm | `rgba(16, 185, 129, 0.45) 0px 0px 8px 0px` | `--shadow-sm` |
+| md | `rgba(0, 0, 0, 0.3) 0px 4px 12px 0px` | `--shadow-md` |
+| lg | `rgba(0, 0, 0, 0.4) 0px 8px 24px 0px` | `--shadow-lg` |
 
 ### Layout
 
 - **Section gap:** 28px
-- **Card padding:** 22px
-- **Element gap:** 10px
+- **Card padding:** 24px
+- **Element gap:** 12px
 
 ## Components
 
@@ -116,10 +111,10 @@ Background: transparent, Text: #ffffff, Underline: 8px solid #ffffff, Padding: 0
 
 Background: #000000, Text: #ffffff, Border: 1.5px solid rgba(61, 61, 61, 0.6), Padding: 0px top/bottom, 18px horizontal. No border radius.
 
-### Primary Action Button - Lime
+### Primary Action Button - Emerald
 **Role:** Hero call to action, main navigation launch button. High contrast and immediate visibility.
 
-Background: #c5ff4a, Text: #000000, Border: 1.5px solid #c5ff4a, Padding: 14px vertical, 20px horizontal. No border radius.
+Background: #10b981, Text: #000000, Border: 1.5px solid #10b981, Padding: 14px vertical, 20px horizontal. No border radius.
 
 ### Text Link Button
 **Role:** Inline textual links or buttons that blend into the surrounding content, often using arrow icons for interaction cues.
@@ -135,18 +130,18 @@ Height: 1px, Background: #252525.
 
 ### Do
 - Always use a #000000 background for large sections to maintain the dark theme unless a specific, subtle background is otherwise designated.
-- Highlight interactive elements and calls to action with `Lime Interface` (#c5ff4a) to ensure high visibility and direct user attention.
-- Employ `PT Serif` for all headings and `Inter Tight` for body and UI elements to maintain the serious yet compact typographic style.
+- Highlight interactive elements and calls to action with `Emerald Brand` (#10b981) to ensure high visibility and direct user attention.
+- Employ `PT Serif` for all headings and `Geist` for body and UI elements to maintain the serious yet compact typographic style.
 - Utilize 0px border-radius for all components to ensure a sharp, technical aesthetic throughout the interface.
-- Separate content visually with thin `Dark Grid` (#252525) borders or by alternating surface colors rather than heavy boxes or pronounced shadows.
-- Apply negative letter-spacing for large PT Serif headlines (-0.01em to -0.035em) and positive letter-spacing for small Inter Tight elements (0.01em to 0.16em) to control visual density.
-- Use a subtle `Lime Pulse Shadow` for interactive brand elements to give them an ethereal glow without heavy elevation.
+- Separate content visually with thin `surface-border` (#252525) borders or by alternating surface colors rather than heavy boxes or pronounced shadows.
+- Apply negative letter-spacing for large PT Serif headlines (-0.01em to -0.035em) and positive letter-spacing for small UI elements (0.01em to 0.16em) to control visual density.
+- Use a subtle `Emerald Pulse Shadow` for interactive brand elements to give them an ethereal glow without heavy elevation.
 
 ### Don't
 - Avoid rounded corners on any UI element; the brand aesthetic is defined by sharp edges and precise geometry.
-- Do not introduce additional chromatic colors beyond `Lime Interface` (#c5ff4a) unless for semantic status indicators like error/success, using the defined `Glow Green` or `Soft Lime` accents sparingly.
-- Refrain from using heavy drop shadows for elevation; prefer thin borders or the subtle `Lime Pulse Shadow` for emphasis.
-- Do not use generic system fonts for body or headings; always map to the specified `PT Serif`, `Inter Tight`, `ui-monospace`, or `JetBrains Mono`.
+- Do not introduce additional chromatic colors beyond `Emerald Brand` (#10b981) unless for semantic status indicators like error/success, using the defined `Glow Green` or `Soft Emerald` accents sparingly.
+- Refrain from using heavy drop shadows for elevation; prefer thin borders or the subtle `Emerald Pulse Shadow` for emphasis.
+- Do not use generic system fonts for body or headings; always map to the specified `PT Serif`, `Geist`, `Geist Mono`, or `JetBrains Mono`.
 - Avoid large areas of white background unless specifically defined as an alternative content surface; the primary theme is dark mode.
 - Do not use thick borders or excessive padding for interactive elements; maintain a lightweight and efficient feel.
 - Do not introduce arbitrary vertical spacing; adhere to the `comfortable` density and specific `elementGap`, `cardPadding`, and `sectionGap` values.
@@ -163,11 +158,11 @@ Height: 1px, Background: #252525.
 
 ## Imagery
 
-This site features a blend of abstract, digital-art hands made of binary code for atmospheric effect, mixed with precise product screenshots of code and UI. Photography is absent. Illustrations are stylized, flat, and often monochromatic with a single color accent, conveying a high-tech, data-centric narrative. Icons are minimal, either outlined or filled, with a very fine stroke weight or solid fill. Imagery serves primarily to set a futuristic, secure atmosphere and to explain technical concepts or showcase product interfaces, rather than decorative purposes. The visual density is moderate, with imagery often contained within specific sections and balanced by significant textual information.
+This site features a blend of abstract, digital-art hands made of binary code for atmospheric effect, mixed with precise product screenshots of code and UI. Photography is absent. Illustrations are stylized, flat, and often monochromatic with a single emerald color accent, conveying a high-tech, data-centric narrative. Icons are minimal, either outlined or filled, with a very fine stroke weight or solid fill. Imagery serves primarily to set a futuristic, secure atmosphere and to explain technical concepts or showcase product interfaces, rather than decorative purposes. The visual density is moderate, with imagery often contained within specific sections and balanced by significant textual information.
 
 ## Layout
 
-The page primarily uses a full-bleed, dark background with content sections stretching fluidly or contained within a implied central column. The hero element is full-bleed, featuring large centered text over abstract digital imagery. Subsequent sections often alternate between large, impactful headlines (sometimes with a lime accent) and multi-column layouts, particularly a distinctive text-heavy section with parallel descriptions. Vertical rhythm is established by consistent spacing between sections, sometimes with subtle graphical vertical dividers. Navigation is a minimalist top bar, with prominent 'Launch' button in lime. Card grids are used for features, showcasing clear hierarchy within a dark interface.
+The page primarily uses a full-bleed, dark background with content sections stretching fluidly or contained within a implied central column. The hero element is full-bleed, featuring large centered text over abstract digital imagery. Subsequent sections often alternate between large, impactful headlines (sometimes with an emerald accent) and multi-column layouts, particularly a distinctive text-heavy section with parallel descriptions. Vertical rhythm is established by consistent spacing between sections, sometimes with subtle graphical vertical dividers. Navigation is a minimalist top bar, with prominent 'Launch' button in emerald. Card grids are used for features, showcasing clear hierarchy within a dark interface.
 
 ## Agent Prompt Guide
 
@@ -175,13 +170,13 @@ The page primarily uses a full-bleed, dark background with content sections stre
 - text: #ffffff
 - background: #000000
 - border: #252525
-- accent: #c5ff4a
-- primary action: #c5ff4a (filled action)
+- accent: #10b981
+- primary action: #10b981 (filled action)
 
 ### 3-5 Example Component Prompts
-1. Create a Primary Action Button: #c5ff4a background, #000000 text, 9999px radius, compact pill padding. Use this filled treatment for the main CTA.
-2. Design a feature card: `Dark Card` background (#1f1f1f), with a 1.5px solid `Dark Grid` (#252525) border. Title is `PT Serif` 26px, weight 400, color `Silver Whisper`, letter-spacing -0.02em. Body text is `Inter Tight` 14px, weight 400, color `Mid-Gray Border` (#7a7a7a). Use 22px padding all around.
-4. Develop a legal disclaimer text block: Background `Midnight Ink`, text `ui-monospace` 9px, weight 400, color `Faint Grid` (#3d3d3d), letter-spacing 0.22em. Use 10px element gap for paragraphs.
+1. Create a Primary Action Button: #10b981 background, #000000 text, 0px radius, compact padding. Use this filled treatment for the main CTA.
+2. Design a feature card: `Dark Card` background (#1f1f1f), with a 1.5px solid `Dark Grid` (#252525) border. Title is `PT Serif` 26px, weight 400, color `Silver Whisper`, letter-spacing -0.02em. Body text is `Geist` 14px, weight 400, color `Mid-Gray Border` (#7a7a7a). Use 22px padding all around.
+3. Develop a legal disclaimer text block: Background `Midnight Ink`, text `ui-monospace` 9px, weight 400, color `Faint Grid` (#3d3d3d), letter-spacing 0.22em. Use 10px element gap for paragraphs.
 
 ## Similar Brands
 
@@ -199,18 +194,18 @@ The page primarily uses a full-bleed, dark background with content sections stre
   /* Colors */
   --color-midnight-ink: #000000;
   --color-silver-whisper: #ffffff;
-  --color-lime-interface: #c5ff4a;
-  --gradient-lime-interface: linear-gradient(90deg, rgb(197, 255, 74) 0px, rgb(197, 255, 74) 6px, rgba(0, 0, 0, 0) 6px, rgba(0, 0, 0, 0) 12px);
+  --color-emerald-brand: #10b981;
   --color-dark-grid: #252525;
   --color-mid-gray-border: #7a7a7a;
   --color-faint-grid: #3d3d3d;
-  --color-glow-green: #597321;
-  --color-soft-lime: #314013;
+  --color-glow-green: #065f46;
+  --color-soft-emerald: #022c22;
   --color-white-outlined-text: #c5c5c5;
 
   /* Typography — Font Families */
   --font-pt-serif: 'PT Serif', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-inter-tight: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-ui-monospace: 'ui-monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -237,34 +232,29 @@ The page primarily uses a full-bleed, dark background with content sections stre
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
 
-  /* Spacing */
+  /* Spacing (8pt grid) */
   --spacing-4: 4px;
-  --spacing-6: 6px;
-  --spacing-7: 7px;
   --spacing-8: 8px;
-  --spacing-10: 10px;
   --spacing-12: 12px;
-  --spacing-14: 14px;
   --spacing-16: 16px;
-  --spacing-18: 18px;
   --spacing-20: 20px;
-  --spacing-22: 22px;
   --spacing-24: 24px;
   --spacing-28: 28px;
-  --spacing-30: 30px;
   --spacing-32: 32px;
   --spacing-44: 44px;
 
   /* Layout */
   --section-gap: 28px;
-  --card-padding: 22px;
-  --element-gap: 10px;
+  --card-padding: 24px;
+  --element-gap: 12px;
 
   /* Named Radii */
   --radius-none: 0px;
 
   /* Shadows */
-  --shadow-sm: rgba(197, 255, 74, 0.45) 0px 0px 8px 0px;
+  --shadow-sm: rgba(16, 185, 129, 0.45) 0px 0px 8px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.3) 0px 4px 12px 0px;
+  --shadow-lg: rgba(0, 0, 0, 0.4) 0px 8px 24px 0px;
 
   /* Surfaces */
   --surface-deep-space: #000000;
@@ -282,17 +272,18 @@ The page primarily uses a full-bleed, dark background with content sections stre
   /* Colors */
   --color-midnight-ink: #000000;
   --color-silver-whisper: #ffffff;
-  --color-lime-interface: #c5ff4a;
+  --color-emerald-brand: #10b981;
   --color-dark-grid: #252525;
   --color-mid-gray-border: #7a7a7a;
   --color-faint-grid: #3d3d3d;
-  --color-glow-green: #597321;
-  --color-soft-lime: #314013;
+  --color-glow-green: #065f46;
+  --color-soft-emerald: #022c22;
   --color-white-outlined-text: #c5c5c5;
 
   /* Typography */
   --font-pt-serif: 'PT Serif', ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-inter-tight: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-ui-monospace: 'ui-monospace', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-jetbrains-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
@@ -313,25 +304,20 @@ The page primarily uses a full-bleed, dark background with content sections stre
   --leading-display: 0.88;
   --tracking-display: -0.035px;
 
-  /* Spacing */
+  /* Spacing (8pt grid) */
   --spacing-4: 4px;
-  --spacing-6: 6px;
-  --spacing-7: 7px;
   --spacing-8: 8px;
-  --spacing-10: 10px;
   --spacing-12: 12px;
-  --spacing-14: 14px;
   --spacing-16: 16px;
-  --spacing-18: 18px;
   --spacing-20: 20px;
-  --spacing-22: 22px;
   --spacing-24: 24px;
   --spacing-28: 28px;
-  --spacing-30: 30px;
   --spacing-32: 32px;
   --spacing-44: 44px;
 
   /* Shadows */
-  --shadow-sm: rgba(197, 255, 74, 0.45) 0px 0px 8px 0px;
+  --shadow-sm: rgba(16, 185, 129, 0.45) 0px 0px 8px 0px;
+  --shadow-md: rgba(0, 0, 0, 0.3) 0px 4px 12px 0px;
+  --shadow-lg: rgba(0, 0, 0, 0.4) 0px 8px 24px 0px;
 }
 ```
