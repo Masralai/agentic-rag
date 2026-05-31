@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export function Features() {
   return (
-    <section className="px-6 py-28 sm:py-36">
+    <section id="features" className="px-6 py-28 sm:py-36">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0 }}
@@ -35,8 +35,8 @@ export function Features() {
               <p className="text-sm sm:text-base text-text-muted leading-relaxed max-w-md font-sans tracking-[0.03em] sm:tracking-[0.02em]">
                 Every source you upload is chunked, embedded, and indexed into a
                 vector store. Ask questions in plain language — the relevant
-                context is retrieved automatically and answers stream back with
-                numbered citations linked to the original material.
+                context is retrieved automatically and answers stream back
+                with source references.
               </p>
             </div>
 
@@ -55,22 +55,9 @@ export function Features() {
                     <div className="bg-surface-card border border-surface-border px-3.5 py-2.5 max-w-[90%]">
                       <p className="text-xs text-text-outlined leading-relaxed">
                         Revenue grew 18% year-over-year, driven primarily by
-                        enterprise segment expansion
-                        <sup className="citation">[1]</sup>. Operating margins
-                        improved 320bps due to cost optimization initiatives
-                        <sup className="citation">[2]</sup>.
+                        enterprise segment expansion. Operating margins
+                        improved 320bps due to cost optimization initiatives.
                       </p>
-                      <div className="mt-2.5 pt-2.5 border-t border-surface-border">
-                        
-                        <div className="flex flex-wrap gap-1">
-                          <span className="text-[9px] bg-surface-subtle text-text-muted px-1.5 py-0.5">
-                            [1] q3_report.pdf
-                          </span>
-                          <span className="text-[9px] bg-surface-subtle text-text-muted px-1.5 py-0.5">
-                            [2] earnings_call.docx
-                          </span>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { PT_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { PT_Serif, JetBrains_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
 const ptSerif = PT_Serif({
   subsets: ["latin"],
   variable: "--font-pt-serif",
   weight: ["400"],
-});
-
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  variable: "--font-inter-tight",
-  weight: ["400", "500", "600"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -39,7 +36,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
     <html lang="en">
-      <body className={`${ptSerif.variable} ${interTight.variable} ${jetbrainsMono.variable} bg-black text-white antialiased`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} ${ptSerif.variable} ${jetbrainsMono.variable} bg-black text-white antialiased`}>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-500 focus:text-black focus:outline-none"
@@ -47,6 +44,7 @@ export default function RootLayout({
           Skip to main
         </a>
         {children}
+        <Toaster />
       </body>
     </html>
     </ClerkProvider>

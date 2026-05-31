@@ -3,8 +3,10 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 export function Cta() {
+  const { isSignedIn } = useAuth();
   return (
     <section className="relative px-6 py-36 sm:py-48 border-t border-surface-border overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_50%,_#10b98110_0%,_transparent_70%)] pointer-events-none" />
@@ -29,7 +31,7 @@ export function Cta() {
             No credit card required.
           </p>
           <Link
-            href="/sign-in"
+            href={isSignedIn ? "/nodes" : "/sign-in"}
             className="group inline-flex items-center justify-center bg-accent-brand text-black border border-accent-brand px-5 py-3.5 text-sm transition-all duration-200"
           >
             <span>Get started</span>

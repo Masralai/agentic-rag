@@ -1,10 +1,10 @@
+import { EmptyState } from "@/components/empty-state";
+
 export default function DashboardPage() {
   return (
-    <div className="flex-1 flex items-center justify-center text-text-muted">
-      <div className="text-center">
-        <p className="text-lg">Select a node</p>
-        <p className="text-sm mt-1">or create a new one to get started</p>
-      </div>
-    </div>
+    <EmptyState
+      title="Select a node"
+      description="Choose a node from the sidebar or create a new one to get started."
+    />
   );
 }

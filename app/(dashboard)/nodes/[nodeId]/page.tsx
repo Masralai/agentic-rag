@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { addSource, removeSource, listSources, listMessages, generateSummary, getSourceContent } from "../../actions";
 import { Send, Plus, Loader2, BookOpen, HelpCircle, FileText, Search } from "lucide-react";
+import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import {
   Sheet,
   SheetContent,
@@ -45,7 +46,17 @@ export default function NodePage() {
   const [previewText, setPreviewText] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [sourceToRemove, setSourceToRemove] = useState<string | null>(null);
+  const [sourceSidebarWidth, setSourceSidebarWidth] = useState(320);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("psynapse-source-sidebar-width");
+    if (saved) setSourceSidebarWidth(parseInt(saved, 10));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("psynapse-source-sidebar-width", String(sourceSidebarWidth));
+  }, [sourceSidebarWidth]);
 
   const fetchData = useCallback(async () => {
     const [srcs, msgs] = await Promise.all([
@@ -182,13 +193,23 @@ export default function NodePage() {
 
   const handleSummary = async (type: "study-guide" | "faq") => {
     setSummaryLoading(true);
-    const result = await generateSummary(nodeId, type);
-    setSummary(result.content);
+    try {
+      const result = await generateSummary(nodeId, type);
+      setSummary(result.content);
+      toast.success("Summary generated");
+    } catch {
+      toast.error("Failed to generate summary");
+    }
     setSummaryLoading(false);
   };
 
   const handleRemoveSource = async (id: string) => {
-    await removeSource(id, nodeId);
+    try {
+      await removeSource(id, nodeId);
+      toast.success("Source removed");
+    } catch {
+      toast.error("Failed to remove source");
+    }
     fetchData();
   };
 
@@ -209,18 +230,6 @@ export default function NodePage() {
     s.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  function renderContent(content: string) {
-    const processed = content.replace(
-      /\[(\d+)\]/g,
-      '<sup class="citation">[$1]</sup>',
-    );
-    return (
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-        {processed}
-      </ReactMarkdown>
-    );
-  }
-
   return (
     <>
       {sources.length === 0 && messages.length === 0 ? (
@@ -229,48 +238,49 @@ export default function NodePage() {
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.length === 0 && !summary && (
-              <div className="text-center text-text-muted mt-20">
-                <p className="text-2xl font-bold tracking-tight text-text-muted">Ask anything</p>
-                <p className="text-sm mt-1">Query your documents with AI</p>
-              </div>
-            )}
+              {messages.length === 0 && !summary && (
+                <div className="mt-20">
+                  {/* using basic text to avoid layout shift from EmptyState import */}
+                  <div className="text-center">
+                    <p className="text-base font-semibold text-text-muted">Ask anything</p>
+                    <p className="text-sm mt-1 text-text-muted/70">Upload documents, ask questions, get answers</p>
+                  </div>
+                </div>
+              )}
 
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <AnimatePresence initial={false}>
+            {messages.map((msg, i) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.2, delay: i * 0.03, ease: "easeOut" }}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
                 <div
                   className={`max-w-2xl px-5 py-4 ${
                     msg.role === "user"
                       ? "bg-surface-elevated"
-                      : "bg-surface-card"
+                      : "bg-surface-card border border-surface-border"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-invert prose-sm max-w-none">
-                      {renderContent(msg.content || (streaming ? "..." : ""))}
-                      {msg.sources.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-surface-border">
-                          <p className="text-xs text-text-muted mb-2 font-medium">SOURCES</p>
-                          <div className="flex flex-wrap gap-2">
-                            {msg.sources.map((src, i) => (
-                              <span
-                                key={`${msg.id}-${src}-${i}`}
-                                className="text-xs bg-surface-elevated text-text-muted px-2 py-1"
-                              >
-                                [{i + 1}] {src}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                    <div className={`prose prose-invert prose-sm max-w-none ${streaming && msg.id === messages[messages.length-1]?.id ? "streaming-cursor" : ""}`}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content || ""}
+                      </ReactMarkdown>
                     </div>
                   ) : (
                     <p className="text-sm">{msg.content}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
             <div ref={messagesEndRef} />
+            <div aria-live="polite" className="sr-only">
+              {streaming ? "Assistant is generating a response" : ""}
+            </div>
           </div>
 
           <div className="border-t border-surface-border p-4 space-y-3">
@@ -312,7 +322,31 @@ export default function NodePage() {
           </div>
         </div>
 
-        <aside className="hidden md:flex w-80 shrink-0 border-l border-surface-border flex-col overflow-hidden">
+        <aside
+          className="hidden md:flex shrink-0 border-l border-surface-border flex-col overflow-hidden relative"
+          style={{ width: sourceSidebarWidth, minWidth: 240, maxWidth: 600 }}
+        >
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-accent-brand/30 z-10 transition-colors"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const aside = (e.currentTarget as HTMLElement).parentElement!;
+              const startX = e.clientX;
+              const startWidth = sourceSidebarWidth;
+              let currentWidth = startWidth;
+              const handleMouseMove = (e: MouseEvent) => {
+                currentWidth = Math.max(240, Math.min(600, startWidth - (e.clientX - startX)));
+                aside.style.width = `${currentWidth}px`;
+              };
+              const handleMouseUp = () => {
+                document.removeEventListener("mousemove", handleMouseMove);
+                document.removeEventListener("mouseup", handleMouseUp);
+                setSourceSidebarWidth(currentWidth);
+              };
+              document.addEventListener("mousemove", handleMouseMove);
+              document.addEventListener("mouseup", handleMouseUp);
+            }}
+          />
           <div className="p-4 border-b border-surface-border space-y-2">
             <div className="flex gap-2">
               <label className="flex-1 h-9 flex items-center justify-center gap-2 bg-surface-card hover:bg-surface-elevated text-xs transition-colors cursor-pointer">

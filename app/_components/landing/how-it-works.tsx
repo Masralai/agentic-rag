@@ -52,9 +52,9 @@ const stages = [
   },
   {
     icon: MessageSquareText,
-    label: "Query with citations",
-    description: "Ask questions, get cited answers",
-    detail: "Answers stream in real-time with numbered citations so you can verify every claim.",
+    label: "Ask questions naturally",
+    description: "Get instant answers",
+    detail: "Answers stream in real-time so you can get insights faster.",
     mockup: (
       <div className="bg-surface-card border border-surface-border p-[22px]">
         <div className="space-y-2">
@@ -66,10 +66,7 @@ const stages = [
           <div className="flex justify-start">
             <div className="bg-surface-card border border-surface-border px-3 py-2 max-w-[90%]">
               <p className="text-[10px] text-text-outlined">
-                Based on the uploaded sources
-                <sup className="citation text-[8px]">[1]</sup>
-                <sup className="citation text-[8px]">[2]</sup>
-                ...
+                Based on the uploaded sources ...
               </p>
             </div>
           </div>
