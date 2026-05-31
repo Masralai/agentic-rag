@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import { Langbase } from "langbase";
 import { CONFIG } from "@/lib/config";
 import { PdfParser } from "@/modules/ingestion/parsers/pdf";
-import { isLMStudioAvailable } from "@/modules/llm/lmstudio";
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { PDFDocument, StandardFonts } from "pdf-lib";
@@ -13,44 +12,14 @@ const langbase = apiKey ? new Langbase({ apiKey }) : null;
 const pdfPath = resolve(__dirname, "../fixtures/QNA.pdf");
 const hasPdf = existsSync(pdfPath);
 
-describe.runIf(!!apiKey)("Langbase integration", () => {
+describe.runIf(!!apiKey)("Langbase pipes (LLM fallback)", () => {
   it("connects and lists pipes", async () => {
     const pipes: any[] = await langbase!.pipes.list();
     expect(Array.isArray(pipes)).toBe(true);
     const names = pipes.map((p: any) => p.name);
     expect(names).toContain(CONFIG.PIPE_NAME);
   });
-
-  it("connects and lists memories", async () => {
-    const memories: any[] = await langbase!.memories.list();
-    expect(Array.isArray(memories)).toBe(true);
-    const names = memories.map((m: any) => m.name);
-    expect(names).toContain(CONFIG.MEMORY_NAME);
-  });
-
-  it("uploads a text document to memory", async () => {
-    const result = await langbase!.memories.documents.upload({
-      memoryName: CONFIG.MEMORY_NAME,
-      contentType: "text/plain",
-      documentName: `integration-test-${Date.now()}.txt`,
-      document: Buffer.from("Integration test document content."),
-    });
-    expect(result.ok).toBe(true);
-  }, 15000);
-
-  it("retrieves from memory", async () => {
-    const chunks = await langbase!.memories.retrieve({
-      query: "integration test",
-      topK: 1,
-      memory: [{ name: CONFIG.MEMORY_NAME }],
-    });
-    expect(Array.isArray(chunks)).toBe(true);
-  }, 60000);
-
-  it.skip("runs a simple pipe query (needs Langbase billing)", () => {});
 });
-
-
 
 describe.runIf(hasPdf)("PDF ingestion", () => {
   const parser = new PdfParser();
@@ -67,24 +36,6 @@ describe.runIf(hasPdf)("PDF ingestion", () => {
     expect(result.metadata.parser).toBe("pdf");
     expect(result.metadata.pages).toBe(20);
   });
-
-  it("uploads extracted PDF text to memory", async () => {
-    if (!apiKey) return;
-    const buffer = readFileSync(pdfPath);
-    const parsed = await parser.parse({
-      nodeId: "test-node",
-      type: "pdf",
-      file: buffer,
-      fileName: "QNA.pdf",
-    });
-    const result = await langbase!.memories.documents.upload({
-      memoryName: CONFIG.MEMORY_NAME,
-      contentType: "text/plain",
-      documentName: `qna-pdf-${Date.now()}.txt`,
-      document: Buffer.from(parsed.text),
-    });
-    expect(result.ok).toBe(true);
-  }, 15000);
 
   it("fires onProgress callback during OCR for minimal-text PDF", async () => {
     const pdfDoc = await PDFDocument.create();

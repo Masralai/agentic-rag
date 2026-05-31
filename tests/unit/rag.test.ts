@@ -15,7 +15,7 @@ describe("RAG prompts", () => {
       const prompt = buildChatPrompt(chunks, history);
 
       expect(prompt).toContain("Paris is the capital of France");
-      expect(prompt).toContain("[1]");
+      expect(prompt).toContain("[Context 1]");
       expect(prompt).toContain("geography.txt");
       expect(prompt).toContain("Tell me about Paris");
       expect(prompt).toContain("Do not use prior knowledge");
@@ -23,7 +23,7 @@ describe("RAG prompts", () => {
     });
 
     it("handles empty history", () => {
-      const chunks = [{ text: "Some content.", source: "doc.txt" }];
+      const chunks = [{ text: "Some content.", documentName: "doc.txt" }];
       const prompt = buildChatPrompt(chunks, []);
 
       expect(prompt).toContain("Some content.");

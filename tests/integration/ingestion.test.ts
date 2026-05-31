@@ -6,12 +6,10 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 
 const hasDb = !!process.env.DATABASE_URL;
-const hasLangbase = !!process.env.LANGBASE_API_KEY;
-const canTest = hasDb && hasLangbase;
 
 const TEMP_ROOT = "/tmp/psynapse";
 
-describe.runIf(canTest)("processSource", () => {
+describe.runIf(hasDb)("processSource", () => {
   const testUserId = `test-user-${randomUUID().slice(0, 8)}`;
   let testNodeId: string;
   let cleanupIds: string[] = [];
