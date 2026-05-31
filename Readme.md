@@ -1,4 +1,4 @@
-# Agentic RAG
+# Psynapse - Agentic RAG
 
 A TypeScript-based project that implements a Retrieval-Augmented Generation (RAG) system with AI agents for intelligent document processing and querying.
 
