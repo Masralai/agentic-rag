@@ -63,3 +63,6 @@ uploads/
 
 *.pdf
 eng.traineddata
+*.md
+playwright/.clerk/
+.playwright-mcp

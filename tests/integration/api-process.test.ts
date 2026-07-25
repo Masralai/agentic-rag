@@ -28,7 +28,7 @@ describe("POST /api/sources/[id]/process", () => {
     expect(body.message).toBe("Authentication required");
   });
 
-  it.runIf(hasDb)("returns error JSON with 500 on processing failure", async () => {
+  it.runIf(hasDb)("returns error JSON with 404 when source is missing", async () => {
     (auth as any).mockResolvedValue({ userId: "test-user" });
 
     const response = await POST(
@@ -36,9 +36,9 @@ describe("POST /api/sources/[id]/process", () => {
       { params: Promise.resolve({ id: "00000000-0000-0000-0000-000000000000" }) },
     );
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(404);
     const body = await response.json();
     expect(body.status).toBe("error");
-    expect(body.message).toBe("Source not found: 00000000-0000-0000-0000-000000000000");
+    expect(body.message).toBe("Source not found");
   }, 15000);
 });

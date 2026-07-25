@@ -3,7 +3,7 @@ import { buildChatPrompt, buildSummaryPrompt } from "@/modules/rag/prompts";
 
 describe("RAG prompts", () => {
   describe("buildChatPrompt", () => {
-    it("includes chunks and history in prompt", () => {
+    it("includes numbered chunks, history, and cite instructions", () => {
       const chunks = [
         {
           text: "Paris is the capital of France.",
@@ -15,10 +15,11 @@ describe("RAG prompts", () => {
       const prompt = buildChatPrompt(chunks, history);
 
       expect(prompt).toContain("Paris is the capital of France");
-      expect(prompt).toContain("[Context 1]");
+      expect(prompt).toContain("[1]");
       expect(prompt).toContain("geography.txt");
       expect(prompt).toContain("Tell me about Paris");
       expect(prompt).toContain("Do not use prior knowledge");
+      expect(prompt).toContain("cite it with [n]");
       expect(prompt).toContain("Use the conversation history");
     });
 

@@ -21,6 +21,7 @@ describe("Node types", () => {
       type: "pdf",
       name: "doc.pdf",
       status: "ready",
+      enabled: true,
       metadata: { pages: 5 },
       createdAt: new Date(),
     };
@@ -35,6 +36,7 @@ describe("Node types", () => {
       role: "user",
       content: "hello",
       sources: [],
+      citations: [],
       createdAt: new Date(),
     };
     expect(msg.role).toBe("user");
@@ -69,6 +71,7 @@ describe("Node types", () => {
       type: "pdf",
       name: "scanned.pdf",
       status: "processing",
+      enabled: true,
       metadata: {},
       createdAt: new Date(),
       progress: { current: 3, total: 10, phase: "OCR: page 3 of 10" },
@@ -82,6 +85,7 @@ describe("Node types", () => {
       type: "pdf",
       name: "text.pdf",
       status: "ready",
+      enabled: true,
       metadata: {},
       createdAt: new Date(),
     };

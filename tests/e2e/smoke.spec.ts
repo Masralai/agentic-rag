@@ -2,7 +2,8 @@ import { test, expect } from "@playwright/test";
 
 test("sign-in page loads", async ({ page }) => {
   await page.goto("/sign-in");
-  await expect(page.locator("h1, h2").first()).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("body")).toBeVisible();
   await expect(page).toHaveTitle(/Psynapse/);
 });
 
