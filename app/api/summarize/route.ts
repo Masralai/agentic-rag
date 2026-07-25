@@ -1,6 +1,7 @@
 import { summarize, type SummaryType } from "@/modules/rag";
 import { auth } from "@clerk/nextjs/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { nodeService } from "@/modules/node";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -26,6 +27,12 @@ export async function POST(req: Request) {
 
   if (!nodeId || !type) {
     return new Response("Missing nodeId or type", { status: 400 });
+  }
+
+  try {
+    await nodeService.assertNodeOwner(nodeId, session.userId);
+  } catch {
+    return new Response("Forbidden", { status: 403 });
   }
 
   const result = await summarize(nodeId, type as SummaryType);

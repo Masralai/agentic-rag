@@ -2,7 +2,6 @@
 
 import { requireAuth } from "@/modules/auth";
 import { nodeService } from "@/modules/node";
-import { processSource } from "@/modules/ingestion";
 import { summarize, type SummaryType } from "@/modules/rag";
 import { revalidatePath } from "next/cache";
 import { mkdir, writeFile } from "fs/promises";
@@ -20,14 +19,16 @@ export async function listNodes() {
 }
 
 export async function renameNode(id: string, name: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(id, userId);
   const node = await nodeService.renameNode(id, name);
   revalidatePath("/");
   return node;
 }
 
 export async function deleteNode(id: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(id, userId);
   await nodeService.deleteNode(id);
   revalidatePath("/");
 }
@@ -37,7 +38,8 @@ export async function addSource(
   type: "pdf" | "docx" | "txt" | "csv" | "md" | "html" | "xlsx" | "web" | "youtube",
   formData: FormData,
 ) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
 
   const file = formData.get("file") as File | null;
   const url = formData.get("url") as string | null;
@@ -48,7 +50,8 @@ export async function addSource(
     type,
     name: name || file?.name || url || "unknown",
     status: "pending",
-  } as any);
+    metadata: url ? { url } : {},
+  });
 
   if (file) {
     const dir = `/tmp/psynapse/${source.id}`;
@@ -61,27 +64,53 @@ export async function addSource(
 }
 
 export async function removeSource(sourceId: string, nodeId: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
   await nodeService.removeSource(sourceId);
   revalidatePath(`/nodes/${nodeId}`);
 }
 
+export async function setSourceEnabled(sourceId: string, nodeId: string, enabled: boolean) {
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
+  await nodeService.updateSource(sourceId, { enabled });
+  revalidatePath(`/nodes/${nodeId}`);
+}
+
 export async function listSources(nodeId: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
   return nodeService.listSources(nodeId);
 }
 
 export async function listMessages(nodeId: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
   return nodeService.listMessages(nodeId);
 }
 
 export async function getSourceContent(sourceId: string) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  const source = await nodeService.getSource(sourceId);
+  if (!source) throw new Error("Source not found");
+  await nodeService.assertNodeOwner(source.nodeId, userId);
   return nodeService.getSourceContent(sourceId);
 }
 
 export async function generateSummary(nodeId: string, type: SummaryType) {
-  await requireAuth();
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
   return summarize(nodeId, type);
+}
+
+export async function listArtifacts(nodeId: string) {
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
+  return nodeService.listArtifacts(nodeId);
+}
+
+export async function getLatestArtifact(nodeId: string, type: SummaryType) {
+  const { userId } = await requireAuth();
+  await nodeService.assertNodeOwner(nodeId, userId);
+  return nodeService.latestArtifact(nodeId, type);
 }

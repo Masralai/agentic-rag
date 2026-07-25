@@ -3,8 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { addSource, removeSource, listSources, listMessages, generateSummary, getSourceContent } from "../../actions";
-import { Send, Plus, Loader2, BookOpen, HelpCircle, FileText, Search } from "lucide-react";
+import {
+  addSource,
+  removeSource,
+  listSources,
+  listMessages,
+  generateSummary,
+  getSourceContent,
+  setSourceEnabled,
+  getLatestArtifact,
+} from "../../actions";
+import { Send, Plus, Loader2, BookOpen, HelpCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -23,11 +32,11 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SourceIcon } from "@/components/source-icon";
 import { SourceList, MobileSourcesPanel } from "@/components/source-list";
+import { CitedMarkdown, SourcesFooter } from "@/components/cited-markdown";
 import { UrlDialog } from "@/components/url-dialog";
 import { DropZone } from "@/components/drop-zone";
-import type { Source, ChatMessage } from "@/modules/node/types";
+import type { Source, ChatMessage, Citation } from "@/modules/node/types";
 
 const POLL_INTERVAL = 2000;
 
@@ -45,6 +54,7 @@ export default function NodePage() {
   const [previewSourceId, setPreviewSourceId] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewHighlight, setPreviewHighlight] = useState("");
   const [sourceToRemove, setSourceToRemove] = useState<string | null>(null);
   const [sourceSidebarWidth, setSourceSidebarWidth] = useState(320);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -68,7 +78,44 @@ export default function NodePage() {
   }, [nodeId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    getLatestArtifact(nodeId, "study-guide").then((guide) => {
+      getLatestArtifact(nodeId, "faq").then((faq) => {
+        const latest = guide?.createdAt && faq?.createdAt
+          ? (new Date(guide.createdAt) >= new Date(faq.createdAt) ? guide : faq)
+          : guide || faq;
+        if (latest?.content) setSummary(latest.content);
+      });
+    }).catch(() => {});
+  }, [nodeId]);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView(); }, [messages, streaming]);
+
+  const openCitation = async (citation: Citation) => {
+    setPreviewHighlight(citation.snippet || "");
+    setPreviewSourceId(citation.sourceId);
+    setPreviewText("");
+    setPreviewLoading(true);
+    const text = await getSourceContent(citation.sourceId);
+    setPreviewText(text || "No content available");
+    setPreviewLoading(false);
+  };
+
+  const handleCiteClick = (msg: ChatMessage, n: number) => {
+    const cite = msg.citations?.find((c) => c.index === n);
+    if (cite) openCitation(cite);
+  };
+
+  const handleToggleEnabled = async (id: string, enabled: boolean) => {
+    setSources((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
+    try {
+      await setSourceEnabled(id, nodeId, enabled);
+    } catch {
+      toast.error("Failed to update source");
+      fetchData();
+    }
+  };
 
   const anyProcessing = sources.some(
     (s) => s.status === "processing" || s.status === "pending"
@@ -90,6 +137,7 @@ export default function NodePage() {
       role: "user",
       content: query,
       sources: [],
+      citations: [],
       createdAt: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -111,7 +159,7 @@ export default function NodePage() {
 
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), nodeId, role: "assistant", content: "", sources: [], createdAt: new Date() },
+        { id: crypto.randomUUID(), nodeId, role: "assistant", content: "", sources: [], citations: [], createdAt: new Date() },
       ]);
 
       while (reader) {
@@ -137,6 +185,7 @@ export default function NodePage() {
           role: "assistant",
           content: "Error: failed to get response",
           sources: [],
+          citations: [],
           createdAt: new Date(),
         },
       ]);
@@ -216,8 +265,10 @@ export default function NodePage() {
   const handlePreviewSource = async (source: Source) => {
     if (previewSourceId === source.id) {
       setPreviewSourceId(null);
+      setPreviewHighlight("");
       return;
     }
+    setPreviewHighlight("");
     setPreviewSourceId(source.id);
     setPreviewText("");
     setPreviewLoading(true);
@@ -232,15 +283,15 @@ export default function NodePage() {
 
   return (
     <>
-      {sources.length === 0 && messages.length === 0 ? (
-        <DropZone onFiles={handleDropFiles} />
-      ) : (
       <div className="flex flex-1 min-h-0">
         <div className="flex-1 flex flex-col min-w-0">
+          {sources.length === 0 && messages.length === 0 ? (
+            <DropZone onFiles={handleDropFiles} />
+          ) : (
+          <>
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.length === 0 && !summary && (
                 <div className="mt-20">
-                  {/* using basic text to avoid layout shift from EmptyState import */}
                   <div className="text-center">
                     <p className="text-base font-semibold text-text-muted">Ask anything</p>
                     <p className="text-sm mt-1 text-text-muted/70">Upload documents, ask questions, get answers</p>
@@ -266,9 +317,14 @@ export default function NodePage() {
                 >
                   {msg.role === "assistant" ? (
                     <div className={`prose prose-invert prose-sm max-w-none ${streaming && msg.id === messages[messages.length-1]?.id ? "streaming-cursor" : ""}`}>
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {msg.content || ""}
-                      </ReactMarkdown>
+                      <CitedMarkdown
+                        content={msg.content || ""}
+                        onCite={(n) => handleCiteClick(msg, n)}
+                      />
+                      <SourcesFooter
+                        citations={msg.citations || []}
+                        onSelect={openCitation}
+                      />
                     </div>
                   ) : (
                     <p className="text-sm">{msg.content}</p>
@@ -300,6 +356,7 @@ export default function NodePage() {
                 onSearchChange={setSearchQuery}
                 onPreview={handlePreviewSource}
                 onRemove={(id) => setSourceToRemove(id)}
+                onToggleEnabled={handleToggleEnabled}
               />
             )}
 
@@ -320,6 +377,8 @@ export default function NodePage() {
               </button>
             </form>
           </div>
+          </>
+          )}
         </div>
 
         <aside
@@ -401,10 +460,10 @@ export default function NodePage() {
             previewSourceId={previewSourceId}
             onPreview={handlePreviewSource}
             onRemove={(id) => setSourceToRemove(id)}
+            onToggleEnabled={handleToggleEnabled}
           />
         </aside>
       </div>
-      )}
 
       <Sheet
         open={!!previewSourceId}
@@ -423,7 +482,16 @@ export default function NodePage() {
               </div>
             ) : (
               <pre className="text-xs text-text-muted whitespace-pre-wrap font-mono leading-relaxed">
-                {previewText}
+                {previewHighlight && previewText.includes(previewHighlight)
+                  ? previewText.split(previewHighlight).map((part, i, arr) => (
+                      <span key={i}>
+                        {part}
+                        {i < arr.length - 1 && (
+                          <mark className="bg-emerald-900/60 text-emerald-200">{previewHighlight}</mark>
+                        )}
+                      </span>
+                    ))
+                  : previewText}
               </pre>
             )}
           </ScrollArea>

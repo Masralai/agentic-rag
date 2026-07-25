@@ -14,6 +14,7 @@ interface SourceListProps {
   previewSourceId: string | null;
   onPreview: (s: Source) => void;
   onRemove: (id: string) => void;
+  onToggleEnabled?: (id: string, enabled: boolean) => void;
 }
 
 export function SourceList({
@@ -23,6 +24,7 @@ export function SourceList({
   previewSourceId,
   onPreview,
   onRemove,
+  onToggleEnabled,
 }: SourceListProps) {
   return (
     <>
@@ -65,9 +67,22 @@ export function SourceList({
               onClick={() => onPreview(src)}
               className={`group flex flex-col px-3 py-2.5 transition-colors cursor-pointer ${
                 previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
-              }`}
+              } ${src.enabled === false ? "opacity-50" : ""}`}
             >
               <div className="flex items-center gap-3">
+                {onToggleEnabled && (
+                  <input
+                    type="checkbox"
+                    checked={src.enabled !== false}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleEnabled(src.id, e.target.checked);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="accent-emerald-500 shrink-0"
+                    aria-label={`${src.enabled === false ? "Enable" : "Disable"} ${src.name}`}
+                  />
+                )}
                 <SourceIcon type={src.type} size={14} />
                 <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
                 <span className={`text-[10px] px-1.5 py-0.5 shrink-0 ${
@@ -108,10 +123,9 @@ export function SourceList({
 export function MobileSourcesPanel({
   sources,
   previewSourceId,
-  searchQuery,
-  onSearchChange,
   onPreview,
   onRemove,
+  onToggleEnabled,
 }: SourceListProps) {
   return (
     <div className="max-h-48 overflow-y-auto border border-surface-border p-2 space-y-1">
@@ -124,8 +138,21 @@ export function MobileSourcesPanel({
             onClick={() => onPreview(src)}
             className={`group flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer ${
               previewSourceId === src.id ? "bg-surface-elevated" : "hover:bg-surface-card"
-            }`}
+            } ${src.enabled === false ? "opacity-50" : ""}`}
           >
+            {onToggleEnabled && (
+              <input
+                type="checkbox"
+                checked={src.enabled !== false}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onToggleEnabled(src.id, e.target.checked);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="accent-emerald-500 shrink-0"
+                aria-label={`${src.enabled === false ? "Enable" : "Disable"} ${src.name}`}
+              />
+            )}
             <SourceIcon type={src.type} size={14} />
             <span className="text-xs truncate flex-1 text-text-muted">{src.name}</span>
             <span className={`text-[10px] px-1.5 py-0.5 ${
