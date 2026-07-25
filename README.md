@@ -13,10 +13,10 @@
 - **Multi-format ingestion** — PDF, DOCX, TXT, CSV, MD, HTML, XLSX, web pages, and YouTube transcripts. Each format has a dedicated parser with paragraph-aware chunking.
 - **Streaming chat** — Real-time SSE responses from Langbase Pipes (or local LM Studio) with markdown rendering and inline citation chips.
 - **Per-node knowledge bases** — Organize sources into named nodes. Each node has its own conversation history and vector index.
-- **Smart summaries** — Generate structured study guides or FAQ documents from all sources in a node with one click.
-- **Source management** — Sidebar with status badges, live search/filter, raw text preview, and delete confirmation.
+- **Smart summaries** — Generate structured study guides or FAQ documents from enabled sources in a node; artifacts persist across refresh.
+- **Source management** — Sidebar with status badges, enable/disable toggles, live search/filter, raw text preview, and delete confirmation.
 - **Source citations** — Every answer includes bracketed references to the source documents it used. Inline `[1]`, `[2]` markers are rendered as styled superscript chips.
-- **Local LLM support** — Auto-detects LM Studio at runtime. If a local instance is available, it's used instead of Langbase Pipe for inference.
+- **Local LLM support** — Auto-detects LM Studio at runtime. Falls back to OpenRouter, then Langbase Pipe.
 - **Authentication** — Clerk-powered auth with sign-in/sign-up pages, middleware-guarded routes, and server-side session validation.
 - **Rate limiting** — Sliding-window rate limiter (30 req/min chat, 10 req/min summarize) per user.
 - **Landing page** — Full marketing landing page (hero, features, how-it-works, CTA) for unauthenticated visitors.
@@ -50,9 +50,10 @@ flowchart TD
         YT["YouTube (youtube-transcript)"]
     end
 
-    DB[("PostgreSQL (Neon)")]
-    LangMem[("Langbase Memory")]
+    DB[("PostgreSQL + pgvector (Neon)")]
+    Embed["MiniLM embeddings (local)"]
     LangPipe["Langbase Pipe"]
+    OpenRouter["OpenRouter"]
     LMStudio["LM Studio (Local)"]
 
     User -->|Sign in| Clerk
@@ -64,29 +65,31 @@ flowchart TD
     Auth -->|userId| RAG
 
     Node -->|CRUD| DB
-    Ingestion -->|chunks| LangMem
+    Ingestion -->|chunks+vectors| DB
+    Ingestion -->|embed| Embed
     Ingestion -->|metadata| DB
     Ingestion --> Parsers
 
-    RAG -->|retrieve| LangMem
+    RAG -->|retrieve| DB
     RAG -->|generate| LLM
-    RAG -->|messages| DB
+    RAG -->|messages+artifacts| DB
     RAG -->|stream| Next
 
-    LLM --> LangPipe
     LLM --> LMStudio
+    LLM --> OpenRouter
+    LLM --> LangPipe
 
     Next -->|SSE| User
 ```
 
 **Data flow:**
 
-1. User signs in via Clerk. Session is validated on every request by the auth module.
+1. User signs in via Clerk. Session is validated; node mutations require ownership.
 2. User creates a node → stored in PostgreSQL.
-3. User adds a source (file upload or URL) → the ingestion module selects the correct parser, extracts text, chunks it (~4KB paragraph-boundary splits), uploads each chunk to Langbase Memory (vector store), and records metadata in PostgreSQL.
-4. User sends a message → the RAG module retrieves the top-4 relevant chunks from Langbase Memory, builds a system prompt with chunks + conversation history, streams the LLM response back to the client via SSE, and persists the conversation.
-5. LLM inference is routed through the LLM provider module — auto-detects LM Studio (local) if available, otherwise falls back to Langbase Pipe.
-6. User requests a summary → the RAG module collects all ready source texts, builds a study-guide or FAQ prompt, and runs it through the LLM provider.
+3. User adds a source (file upload or URL) → parser extracts text, paragraph-aware chunks (~1000 chars / 200 overlap), local MiniLM embeddings, stored in `chunks` (pgvector). URL sources store `metadata.url` for reprocessing.
+4. User sends a message → RAG retrieves top-6 enabled chunks, builds a cited system prompt, streams the LLM response, and persists messages + citation metadata.
+5. LLM routing: LM Studio → OpenRouter → Langbase Pipe.
+6. Study Guide / FAQ → capped enabled-source text → LLM → persisted in `artifacts`.
 
 ---
 
