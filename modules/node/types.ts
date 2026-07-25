@@ -22,6 +22,7 @@ export interface Source {
   type: SourceType;
   name: string;
   status: SourceStatus;
+  enabled: boolean;
   metadata: Record<string, unknown>;
   rawText?: string;
   progress?: ProcessingProgress | null;
@@ -33,6 +34,9 @@ export interface SourceInput {
   type: SourceType;
   name?: string;
   url?: string;
+  status?: string;
+  rawText?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface Chunk {
@@ -46,11 +50,27 @@ export interface Chunk {
   createdAt: Date;
 }
 
+export interface Citation {
+  index: number;
+  sourceId: string;
+  sourceName: string;
+  snippet: string;
+}
+
 export interface ChatMessage {
   id: string;
   nodeId: string;
   role: "user" | "assistant";
   content: string;
   sources: string[];
+  citations: Citation[];
+  createdAt: Date;
+}
+
+export interface Artifact {
+  id: string;
+  nodeId: string;
+  type: "study-guide" | "faq";
+  content: string;
   createdAt: Date;
 }

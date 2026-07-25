@@ -1,7 +1,11 @@
-export function buildChatPrompt(chunks: { text: string; documentName?: string }[], history: { role: string; content: string }[]): string {
+export function buildChatPrompt(
+  chunks: { text: string; documentName?: string }[],
+  history: { role: string; content: string }[],
+): string {
   const chunksText = chunks
-    .map((chunk, i) =>
-      `[Context ${i + 1}]\n${chunk.text}\nSource: ${chunk.documentName || "Unknown"}`
+    .map(
+      (chunk, i) =>
+        `[${i + 1}]\n${chunk.text}\nSource: ${chunk.documentName || "Unknown"}`,
     )
     .join("\n\n");
 
@@ -13,6 +17,7 @@ export function buildChatPrompt(chunks: { text: string; documentName?: string }[
 You are a helpful AI assistant. Answer questions based ONLY on the provided context below.
 Use the conversation history for context on follow-up questions.
 If the context doesn't contain the answer, say you don't know. Do not use prior knowledge.
+When a claim comes from a context block, cite it with [n] using the block number (e.g. [1], [2]).
 
 ${history.length > 0 ? `Conversation so far:\n${historyText}\n` : ""}
 
@@ -20,7 +25,10 @@ Context:
 ${chunksText || "No context provided."}`;
 }
 
-export function buildSummaryPrompt(sources: { name: string; text: string }[], type: "study-guide" | "faq"): string {
+export function buildSummaryPrompt(
+  sources: { name: string; text: string }[],
+  type: "study-guide" | "faq",
+): string {
   if (sources.length === 0) {
     return `No source material available to generate a ${type === "study-guide" ? "study guide" : "FAQ"}.`;
   }

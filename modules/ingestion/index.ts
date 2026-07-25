@@ -64,9 +64,9 @@ export async function ingest(input: SourceInput): Promise<Source> {
     nodeId: input.nodeId,
     type: input.type,
     name: input.name,
-    url: input.url,
     status: "pending",
-  } as Parameters<typeof nodeService.addSource>[0]);
+    metadata: input.url ? { url: input.url } : {},
+  });
 
   try {
     await nodeService.updateSource(sourceRecord.id, { status: "processing" });
@@ -74,7 +74,11 @@ export async function ingest(input: SourceInput): Promise<Source> {
     const parsed: ParsedContent = await parser.parse(input);
 
     const textChunks = chunkText(parsed.text);
+    if (textChunks.length === 0) throw new Error("No text extracted from source");
     const embeddings = await embedBatch(textChunks);
+    if (embeddings.length !== textChunks.length || embeddings.some((e) => !e?.length)) {
+      throw new Error("Embedding failed");
+    }
     await nodeService.addChunks(
       sourceRecord.id,
       sourceRecord.nodeId,
@@ -85,13 +89,17 @@ export async function ingest(input: SourceInput): Promise<Source> {
       })),
     );
 
+    const metadata = {
+      ...(parsed.metadata as Record<string, unknown>),
+      ...(input.url ? { url: input.url } : {}),
+    };
     await nodeService.updateSource(sourceRecord.id, {
       status: "ready",
       rawText: parsed.text,
-      metadata: parsed.metadata as Record<string, unknown>,
+      metadata,
     });
 
-    return { ...sourceRecord, status: "ready", metadata: parsed.metadata as Record<string, unknown>, rawText: parsed.text };
+    return { ...sourceRecord, status: "ready", enabled: true, metadata, rawText: parsed.text };
   } catch (error) {
     await nodeService.updateSource(sourceRecord.id, { status: "failed" });
     throw error;
@@ -109,11 +117,14 @@ export async function processSource(sourceId: string): Promise<void> {
     throw new Error(`No parser for source type: ${source.type}`);
   }
 
+  const metaUrl = typeof source.metadata?.url === "string" ? source.metadata.url : undefined;
+
   const input: SourceInput = {
     nodeId: source.nodeId,
     type: source.type as any,
     name: source.name,
     fileName: source.name,
+    url: metaUrl,
   };
 
   const tempFile = findFirstTempFile(sourceId);
@@ -138,27 +149,35 @@ export async function processSource(sourceId: string): Promise<void> {
     });
 
     const textChunks = chunkText(parsed.text);
-    const embeddings = textChunks.length > 0 ? await embedBatch(textChunks).catch(() => []) : [];
+    if (textChunks.length === 0) {
+      throw new Error("No text extracted from source");
+    }
+
+    const embeddings = await embedBatch(textChunks);
+    if (embeddings.length !== textChunks.length || embeddings.some((e) => !e?.length)) {
+      throw new Error("Embedding failed");
+    }
+
     await nodeService.addChunks(
       sourceId,
       source.nodeId,
       textChunks.map((content, i) => ({
         index: i,
         content,
-        embedding: embeddings[i] || undefined,
+        embedding: embeddings[i],
       })),
     );
 
     await nodeService.updateSource(sourceId, {
       status: "ready",
       rawText: parsed.text,
-      metadata: parsed.metadata as Record<string, unknown>,
+      metadata: { ...(parsed.metadata as Record<string, unknown>), ...(metaUrl ? { url: metaUrl } : {}) },
       progress: null,
     });
 
     cleanTempDir(sourceId);
   } catch (error) {
-    await nodeService.updateSource(sourceId, { status: "failed" });
+    await nodeService.updateSource(sourceId, { status: "failed", progress: null });
     throw error;
   }
 }

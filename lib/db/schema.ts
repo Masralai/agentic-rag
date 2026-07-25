@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, timestamp, jsonb, integer, vector, index } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, timestamp, jsonb, integer, vector, index, boolean } from "drizzle-orm/pg-core";
 
 export const nodes = pgTable("nodes", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -18,6 +18,7 @@ export const sources = pgTable("sources", {
   status: text("status", { enum: ["pending", "processing", "ready", "failed"] })
     .default("pending")
     .notNull(),
+  enabled: boolean("enabled").default(true).notNull(),
   metadata: jsonb("metadata").default({}).notNull(),
   rawText: text("raw_text"),
   progress: jsonb("progress"),
@@ -32,6 +33,7 @@ export const chatMessages = pgTable("chat_messages", {
   role: text("role", { enum: ["user", "assistant"] }).notNull(),
   content: text("content").notNull(),
   sources: text("sources").array().default([]).notNull(),
+  citations: jsonb("citations").$type<Citation[]>().default([]).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -55,3 +57,20 @@ export const chunks = pgTable(
     nodeIdx: index("idx_chunks_node").on(table.nodeId),
   }),
 );
+
+export const artifacts = pgTable("artifacts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nodeId: uuid("node_id")
+    .references(() => nodes.id, { onDelete: "cascade" })
+    .notNull(),
+  type: text("type", { enum: ["study-guide", "faq"] }).notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Citation = {
+  index: number;
+  sourceId: string;
+  sourceName: string;
+  snippet: string;
+};

@@ -1,10 +1,22 @@
 import { db } from "@/lib/db";
-import { nodes, sources, chatMessages, chunks } from "@/lib/db/schema";
-import { eq, and, like, inArray, sql } from "drizzle-orm";
-import type { Node, Source, ChatMessage, SourceInput, Chunk } from "./types";
+import { nodes, sources, chatMessages, chunks, artifacts } from "@/lib/db/schema";
+import { eq, and, like, inArray, sql, desc } from "drizzle-orm";
+import type { Node, Source, ChatMessage, SourceInput, Chunk, Citation, Artifact } from "./types";
 
 function toSource(row: any): Source {
-  return { ...row, metadata: (row.metadata || {}) as Record<string, unknown> };
+  return {
+    ...row,
+    enabled: row.enabled !== false,
+    metadata: (row.metadata || {}) as Record<string, unknown>,
+  };
+}
+
+function toMessage(row: any): ChatMessage {
+  return {
+    ...row,
+    sources: row.sources || [],
+    citations: (row.citations || []) as Citation[],
+  };
 }
 
 export class NodeRepo {
@@ -15,6 +27,19 @@ export class NodeRepo {
 
   async listNodes(userId: string): Promise<Node[]> {
     return db.select().from(nodes).where(eq(nodes.userId, userId));
+  }
+
+  async getNode(id: string): Promise<Node | null> {
+    const [n] = await db.select().from(nodes).where(eq(nodes.id, id));
+    return n ?? null;
+  }
+
+  async assertNodeOwner(nodeId: string, userId: string): Promise<Node> {
+    const node = await this.getNode(nodeId);
+    if (!node || node.userId !== userId) {
+      throw new Error("Forbidden");
+    }
+    return node;
   }
 
   async renameNode(id: string, name: string): Promise<Node> {
@@ -30,7 +55,7 @@ export class NodeRepo {
     await db.delete(nodes).where(eq(nodes.id, id));
   }
 
-  async addSource(input: SourceInput & { status?: string; rawText?: string; metadata?: Record<string, unknown> }): Promise<Source> {
+  async addSource(input: SourceInput): Promise<Source> {
     const [s] = await db
       .insert(sources)
       .values({
@@ -39,7 +64,7 @@ export class NodeRepo {
         name: input.name || "unknown",
         status: (input.status as any) || "pending",
         rawText: input.rawText,
-        metadata: input.metadata as any,
+        metadata: (input.metadata || {}) as any,
       })
       .returning();
     return toSource(s);
@@ -50,20 +75,19 @@ export class NodeRepo {
   }
 
   async listSources(nodeId: string): Promise<Source[]> {
-    const rows = await db
-      .select()
-      .from(sources)
-      .where(eq(sources.nodeId, nodeId));
+    const rows = await db.select().from(sources).where(eq(sources.nodeId, nodeId));
     return rows.map(toSource);
   }
 
   async getSourcesByIds(ids: string[]): Promise<Source[]> {
     if (ids.length === 0) return [];
-    const rows = await db
-      .select()
-      .from(sources)
-      .where(inArray(sources.id, ids));
+    const rows = await db.select().from(sources).where(inArray(sources.id, ids));
     return rows.map(toSource);
+  }
+
+  async getSource(id: string): Promise<Source | null> {
+    const [s] = await db.select().from(sources).where(eq(sources.id, id));
+    return s ? toSource(s) : null;
   }
 
   async getSourceContent(id: string): Promise<string> {
@@ -76,7 +100,13 @@ export class NodeRepo {
 
   async updateSource(
     id: string,
-    data: { status?: string; rawText?: string; metadata?: Record<string, unknown>; progress?: Record<string, unknown> | null },
+    data: {
+      status?: string;
+      rawText?: string;
+      metadata?: Record<string, unknown>;
+      progress?: Record<string, unknown> | null;
+      enabled?: boolean;
+    },
   ): Promise<void> {
     await db
       .update(sources)
@@ -85,6 +115,7 @@ export class NodeRepo {
         ...(data.rawText !== undefined ? { rawText: data.rawText } : {}),
         ...(data.metadata ? { metadata: data.metadata as any } : {}),
         ...(data.progress !== undefined ? { progress: data.progress as any } : {}),
+        ...(data.enabled !== undefined ? { enabled: data.enabled } : {}),
       })
       .where(eq(sources.id, id));
   }
@@ -93,12 +124,7 @@ export class NodeRepo {
     const rows = await db
       .select()
       .from(sources)
-      .where(
-        and(
-          eq(sources.nodeId, nodeId),
-          like(sources.name, `%${query}%`),
-        ),
-      );
+      .where(and(eq(sources.nodeId, nodeId), like(sources.name, `%${query}%`)));
     return rows.map(toSource);
   }
 
@@ -107,12 +133,19 @@ export class NodeRepo {
     role: "user" | "assistant",
     content: string,
     sourcesList: string[] = [],
+    citationsList: Citation[] = [],
   ): Promise<ChatMessage> {
     const [m] = await db
       .insert(chatMessages)
-      .values({ nodeId, role, content, sources: sourcesList })
+      .values({
+        nodeId,
+        role,
+        content,
+        sources: sourcesList,
+        citations: citationsList,
+      })
       .returning();
-    return m;
+    return toMessage(m);
   }
 
   async addChunks(
@@ -144,7 +177,7 @@ export class NodeRepo {
   async searchChunks(
     nodeId: string,
     queryEmbedding: number[],
-    topK: number = 4,
+    topK: number = 6,
   ): Promise<Chunk[]> {
     const embeddingStr = `[${queryEmbedding.join(",")}]`;
 
@@ -160,8 +193,8 @@ export class NodeRepo {
         sourceName: sources.name,
       })
       .from(chunks)
-      .leftJoin(sources, eq(chunks.sourceId, sources.id))
-      .where(eq(chunks.nodeId, nodeId))
+      .innerJoin(sources, eq(chunks.sourceId, sources.id))
+      .where(and(eq(chunks.nodeId, nodeId), eq(sources.enabled, true)))
       .orderBy(sql`${chunks.embedding} <=> ${embeddingStr}::vector`)
       .limit(topK);
 
@@ -172,10 +205,37 @@ export class NodeRepo {
   }
 
   async listMessages(nodeId: string): Promise<ChatMessage[]> {
-    return db
+    const rows = await db
       .select()
       .from(chatMessages)
       .where(eq(chatMessages.nodeId, nodeId))
       .orderBy(chatMessages.createdAt);
+    return rows.map(toMessage);
+  }
+
+  async addArtifact(nodeId: string, type: "study-guide" | "faq", content: string): Promise<Artifact> {
+    const [a] = await db
+      .insert(artifacts)
+      .values({ nodeId, type, content })
+      .returning();
+    return a as Artifact;
+  }
+
+  async listArtifacts(nodeId: string): Promise<Artifact[]> {
+    return db
+      .select()
+      .from(artifacts)
+      .where(eq(artifacts.nodeId, nodeId))
+      .orderBy(desc(artifacts.createdAt)) as Promise<Artifact[]>;
+  }
+
+  async latestArtifact(nodeId: string, type: "study-guide" | "faq"): Promise<Artifact | null> {
+    const [a] = await db
+      .select()
+      .from(artifacts)
+      .where(and(eq(artifacts.nodeId, nodeId), eq(artifacts.type, type)))
+      .orderBy(desc(artifacts.createdAt))
+      .limit(1);
+    return (a as Artifact) ?? null;
   }
 }
